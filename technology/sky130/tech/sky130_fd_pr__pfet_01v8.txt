@@ -1,0 +1,215 @@
+ MODEL sky130_fd_pr__pfet_01v8__model.0 lmin=2.000000e-05 lmax=1.000000e-04 wmin=7.000000e-06 wmax=1.000000e-04 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.1 lmin=8.000000e-06 lmax=2.000000e-05 wmin=7.000000e-06 wmax=1.000000e-04 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.2 lmin=4.000000e-06 lmax=8.000000e-06 wmin=7.000000e-06 wmax=1.000000e-04 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.3 lmin=2.000000e-06 lmax=4.000000e-06 wmin=7.000000e-06 wmax=1.000000e-04 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.4 lmin=1.000000e-06 lmax=2.000000e-06 wmin=7.000000e-06 wmax=1.000000e-04 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.5 lmin=5.000000e-07 lmax=1.000000e-06 wmin=7.000000e-06 wmax=1.000000e-04 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.6 lmin=2.500000e-07 lmax=5.000000e-07 wmin=7.000000e-06 wmax=1.000000e-04 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.7 lmin=1.800000e-07 lmax=2.500000e-07 wmin=7.000000e-06 wmax=1.000000e-04 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.8 lmin=1.500000e-07 lmax=1.800000e-07 wmin=7.000000e-06 wmax=1.000000e-04 (w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.9 lmin=2.000000e-05 lmax=1.000000e-04 wmin=5.000000e-06 wmax=7.000000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.10 lmin=8.000000e-06 lmax=2.000000e-05 wmin=5.000000e-06 wmax=7.000000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.11 lmin=4.000000e-06 lmax=8.000000e-06 wmin=5.000000e-06 wmax=7.000000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.12 lmin=2.000000e-06 lmax=4.000000e-06 wmin=5.000000e-06 wmax=7.000000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.13 lmin=1.000000e-06 lmax=2.000000e-06 wmin=5.000000e-06 wmax=7.000000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.14 lmin=5.000000e-07 lmax=1.000000e-06 wmin=5.000000e-06 wmax=7.000000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.15 lmin=2.500000e-07 lmax=5.000000e-07 wmin=5.000000e-06 wmax=7.000000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.16 lmin=1.800000e-07 lmax=2.500000e-07 wmin=5.000000e-06 wmax=7.000000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.17 lmin=1.500000e-07 lmax=1.800000e-07 wmin=5.000000e-06 wmax=7.000000e-06 (w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.18 lmin=2.000000e-05 lmax=1.000000e-04 wmin=3.000000e-06 wmax=5.000000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.19 lmin=8.000000e-06 lmax=2.000000e-05 wmin=3.000000e-06 wmax=5.000000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.20 lmin=4.000000e-06 lmax=8.000000e-06 wmin=3.000000e-06 wmax=5.000000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.21 lmin=2.000000e-06 lmax=4.000000e-06 wmin=3.000000e-06 wmax=5.000000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.22 lmin=1.000000e-06 lmax=2.000000e-06 wmin=3.000000e-06 wmax=5.000000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.23 lmin=5.000000e-07 lmax=1.000000e-06 wmin=3.000000e-06 wmax=5.000000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.24 lmin=2.500000e-07 lmax=5.000000e-07 wmin=3.000000e-06 wmax=5.000000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.25 lmin=1.800000e-07 lmax=2.500000e-07 wmin=3.000000e-06 wmax=5.000000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.26 lmin=1.500000e-07 lmax=1.800000e-07 wmin=3.000000e-06 wmax=5.000000e-06 (w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.27 lmin=2.000000e-05 lmax=1.000000e-04 wmin=2.000000e-06 wmax=3.000000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.28 lmin=8.000000e-06 lmax=2.000000e-05 wmin=2.000000e-06 wmax=3.000000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.29 lmin=4.000000e-06 lmax=8.000000e-06 wmin=2.000000e-06 wmax=3.000000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.30 lmin=2.000000e-06 lmax=4.000000e-06 wmin=2.000000e-06 wmax=3.000000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.31 lmin=1.000000e-06 lmax=2.000000e-06 wmin=2.000000e-06 wmax=3.000000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.32 lmin=5.000000e-07 lmax=1.000000e-06 wmin=2.000000e-06 wmax=3.000000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.33 lmin=2.500000e-07 lmax=5.000000e-07 wmin=2.000000e-06 wmax=3.000000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.34 lmin=1.800000e-07 lmax=2.500000e-07 wmin=2.000000e-06 wmax=3.000000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.35 lmin=1.500000e-07 lmax=1.800000e-07 wmin=2.000000e-06 wmax=3.000000e-06 (w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.36 lmin=2.000000e-05 lmax=1.000000e-04 wmin=1.680000e-06 wmax=2.000000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.37 lmin=8.000000e-06 lmax=2.000000e-05 wmin=1.680000e-06 wmax=2.000000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.38 lmin=4.000000e-06 lmax=8.000000e-06 wmin=1.680000e-06 wmax=2.000000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.39 lmin=2.000000e-06 lmax=4.000000e-06 wmin=1.680000e-06 wmax=2.000000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.40 lmin=1.000000e-06 lmax=2.000000e-06 wmin=1.680000e-06 wmax=2.000000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.41 lmin=5.000000e-07 lmax=1.000000e-06 wmin=1.680000e-06 wmax=2.000000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.42 lmin=2.500000e-07 lmax=5.000000e-07 wmin=1.680000e-06 wmax=2.000000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.43 lmin=1.800000e-07 lmax=2.500000e-07 wmin=1.680000e-06 wmax=2.000000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.44 lmin=1.500000e-07 lmax=1.800000e-07 wmin=1.680000e-06 wmax=2.000000e-06 (w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.45 lmin=2.000000e-05 lmax=1.000000e-04 wmin=1.650000e-06 wmax=1.680000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.46 lmin=8.000000e-06 lmax=2.000000e-05 wmin=1.650000e-06 wmax=1.680000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.47 lmin=4.000000e-06 lmax=8.000000e-06 wmin=1.650000e-06 wmax=1.680000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.48 lmin=2.000000e-06 lmax=4.000000e-06 wmin=1.650000e-06 wmax=1.680000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.49 lmin=1.000000e-06 lmax=2.000000e-06 wmin=1.650000e-06 wmax=1.680000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.50 lmin=5.000000e-07 lmax=1.000000e-06 wmin=1.650000e-06 wmax=1.680000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.51 lmin=2.500000e-07 lmax=5.000000e-07 wmin=1.650000e-06 wmax=1.680000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.52 lmin=1.800000e-07 lmax=2.500000e-07 wmin=1.650000e-06 wmax=1.680000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.53 lmin=1.500000e-07 lmax=1.800000e-07 wmin=1.650000e-06 wmax=1.680000e-06 (w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.54 lmin=2.000000e-05 lmax=1.000000e-04 wmin=1.260000e-06 wmax=1.650000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.55 lmin=8.000000e-06 lmax=2.000000e-05 wmin=1.260000e-06 wmax=1.650000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.56 lmin=4.000000e-06 lmax=8.000000e-06 wmin=1.260000e-06 wmax=1.650000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.57 lmin=2.000000e-06 lmax=4.000000e-06 wmin=1.260000e-06 wmax=1.650000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.58 lmin=1.000000e-06 lmax=2.000000e-06 wmin=1.260000e-06 wmax=1.650000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.59 lmin=5.000000e-07 lmax=1.000000e-06 wmin=1.260000e-06 wmax=1.650000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.60 lmin=2.500000e-07 lmax=5.000000e-07 wmin=1.260000e-06 wmax=1.650000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.61 lmin=1.800000e-07 lmax=2.500000e-07 wmin=1.260000e-06 wmax=1.650000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.62 lmin=1.500000e-07 lmax=1.800000e-07 wmin=1.260000e-06 wmax=1.650000e-06 (w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.63 lmin=2.000000e-05 lmax=1.000000e-04 wmin=1.000000e-06 wmax=1.260000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.64 lmin=8.000000e-06 lmax=2.000000e-05 wmin=1.000000e-06 wmax=1.260000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.65 lmin=4.000000e-06 lmax=8.000000e-06 wmin=1.000000e-06 wmax=1.260000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.66 lmin=2.000000e-06 lmax=4.000000e-06 wmin=1.000000e-06 wmax=1.260000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.67 lmin=1.000000e-06 lmax=2.000000e-06 wmin=1.000000e-06 wmax=1.260000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.68 lmin=5.000000e-07 lmax=1.000000e-06 wmin=1.000000e-06 wmax=1.260000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.69 lmin=2.500000e-07 lmax=5.000000e-07 wmin=1.000000e-06 wmax=1.260000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.70 lmin=1.800000e-07 lmax=2.500000e-07 wmin=1.000000e-06 wmax=1.260000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.71 lmin=1.500000e-07 lmax=1.800000e-07 wmin=1.000000e-06 wmax=1.260000e-06 (w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.72 lmin=2.000000e-05 lmax=1.000000e-04 wmin=8.400000e-07 wmax=1.000000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.73 lmin=8.000000e-06 lmax=2.000000e-05 wmin=8.400000e-07 wmax=1.000000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.74 lmin=4.000000e-06 lmax=8.000000e-06 wmin=8.400000e-07 wmax=1.000000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.75 lmin=2.000000e-06 lmax=4.000000e-06 wmin=8.400000e-07 wmax=1.000000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.76 lmin=1.000000e-06 lmax=2.000000e-06 wmin=8.400000e-07 wmax=1.000000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.77 lmin=5.000000e-07 lmax=1.000000e-06 wmin=8.400000e-07 wmax=1.000000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.78 lmin=2.500000e-07 lmax=5.000000e-07 wmin=8.400000e-07 wmax=1.000000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.79 lmin=1.800000e-07 lmax=2.500000e-07 wmin=8.400000e-07 wmax=1.000000e-06 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.80 lmin=1.500000e-07 lmax=1.800000e-07 wmin=8.400000e-07 wmax=1.000000e-06 (w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.81 lmin=2.000000e-05 lmax=1.000000e-04 wmin=6.400000e-07 wmax=8.400000e-07 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.82 lmin=8.000000e-06 lmax=2.000000e-05 wmin=6.400000e-07 wmax=8.400000e-07 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.83 lmin=4.000000e-06 lmax=8.000000e-06 wmin=6.400000e-07 wmax=8.400000e-07 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.84 lmin=2.000000e-06 lmax=4.000000e-06 wmin=6.400000e-07 wmax=8.400000e-07 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.85 lmin=1.000000e-06 lmax=2.000000e-06 wmin=6.400000e-07 wmax=8.400000e-07 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.86 lmin=5.000000e-07 lmax=1.000000e-06 wmin=6.400000e-07 wmax=8.400000e-07 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.87 lmin=2.500000e-07 lmax=5.000000e-07 wmin=6.400000e-07 wmax=8.400000e-07 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.88 lmin=1.800000e-07 lmax=2.500000e-07 wmin=6.400000e-07 wmax=8.400000e-07 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.89 lmin=1.500000e-07 lmax=1.800000e-07 wmin=6.400000e-07 wmax=8.400000e-07 (w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.90 lmin=2.000000e-05 lmax=1.000000e-04 wmin=5.500000e-07 wmax=6.400000e-07 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.91 lmin=8.000000e-06 lmax=2.000000e-05 wmin=5.500000e-07 wmax=6.400000e-07 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.92 lmin=4.000000e-06 lmax=8.000000e-06 wmin=5.500000e-07 wmax=6.400000e-07 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.93 lmin=2.000000e-06 lmax=4.000000e-06 wmin=5.500000e-07 wmax=6.400000e-07 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.94 lmin=1.000000e-06 lmax=2.000000e-06 wmin=5.500000e-07 wmax=6.400000e-07 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.95 lmin=5.000000e-07 lmax=1.000000e-06 wmin=5.500000e-07 wmax=6.400000e-07 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.96 lmin=2.500000e-07 lmax=5.000000e-07 wmin=5.500000e-07 wmax=6.400000e-07 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.97 lmin=1.800000e-07 lmax=2.500000e-07 wmin=5.500000e-07 wmax=6.400000e-07 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.98 lmin=1.500000e-07 lmax=1.800000e-07 wmin=5.500000e-07 wmax=6.400000e-07 (w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.99 lmin=2.000000e-05 lmax=1.000000e-04 wmin=4.200000e-07 wmax=5.500000e-07 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.100 lmin=8.000000e-06 lmax=2.000000e-05 wmin=4.200000e-07 wmax=5.500000e-07 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.101 lmin=4.000000e-06 lmax=8.000000e-06 wmin=4.200000e-07 wmax=5.500000e-07 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.102 lmin=2.000000e-06 lmax=4.000000e-06 wmin=4.200000e-07 wmax=5.500000e-07 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.103 lmin=1.000000e-06 lmax=2.000000e-06 wmin=4.200000e-07 wmax=5.500000e-07 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.104 lmin=5.000000e-07 lmax=1.000000e-06 wmin=4.200000e-07 wmax=5.500000e-07 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.105 lmin=2.500000e-07 lmax=5.000000e-07 wmin=4.200000e-07 wmax=5.500000e-07 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.106 lmin=1.800000e-07 lmax=2.500000e-07 wmin=4.200000e-07 wmax=5.500000e-07 (l&w is out of range)
+
+ MODEL sky130_fd_pr__pfet_01v8__model.107 lmin=1.500000e-07 lmax=1.800000e-07 wmin=4.200000e-07 wmax=5.500000e-07 (w is out of range)

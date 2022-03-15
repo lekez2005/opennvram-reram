@@ -18,7 +18,7 @@ info["name"] = "sky130"
 info["has_pwell"] = False
 info["has_nwell"] = True
 
-drc_name = "magic"
+drc_name = "klayout"
 lvs_name = "netgen"
 pex_name = "magic"
 
@@ -58,7 +58,10 @@ layer = {
     "boundary": 235,
     "npc": 95,
     "stdc": 81,
-    "reram_ox": 201
+    "reram_ox": 201,
+    "diode": 81,
+    "res_metal3": 69,
+    "res_metal4": 70
 }
 
 purpose = {
@@ -72,6 +75,9 @@ purpose = {
     "via3": 44,
     "via4": 44,
     "via5": 44,
+    "diode": 23,
+    "res_metal3": 13,
+    "res_metal4": 13,
     "stdc": 4,
     "boundary": 4
 }
@@ -136,6 +142,7 @@ drc["nwell_to_tap_active_space"] = 0.13
 # implant
 drc["implant_to_channel"] = 0.135
 drc["implant_enclosure_active"] = 0.0
+drc["implant_enclosure_diode"] = 0.05  # arbitrary. magic seems to use 0.125 but DRC is fine with 0!
 drc["ptx_implant_enclosure_active"] = 0.0
 drc["implant_enclosure_contact"] = 0
 drc["implant_to_contact"] = 0.07
@@ -221,6 +228,7 @@ else:
 
 drc_exceptions["ptx"] = drc_exceptions["latchup"]
 drc_exceptions["reram_bitcell"] = drc_exceptions["latchup"]
+drc_exceptions["Diode"] = ["met1.6"]
 
 #########################
 # Spice Simulation Parameters
@@ -232,6 +240,10 @@ spice["tx_instance_prefix"] = "X"
 spice["scale_tx_parameters"] = False
 spice["nmos"] = "sky130_fd_pr__nfet_01v8"
 spice["pmos"] = "sky130_fd_pr__pfet_01v8"
+spice["p_diode_name"] = "sky130_fd_pr__diode_pw2nd_05v5"
+spice["n_diode_name"] = "sky130_fd_pr__diode_pd2nw_05v5"
+spice["metal3_res_name"] = "sky130_fd_pr__res_generic_m2"
+spice["metal4_res_name"] = "sky130_fd_pr__res_generic_m3"
 spice["subckt_nmos"] = "msky130_fd_pr__nfet_01v8"
 spice["subckt_pmos"] = "msky130_fd_pr__pfet_01v8"
 spice["vdd_name"] = "vdd"

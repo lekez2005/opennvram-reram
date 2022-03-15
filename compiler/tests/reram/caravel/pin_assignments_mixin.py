@@ -1,7 +1,9 @@
 import math
+from io import StringIO
 from typing import TYPE_CHECKING
 
 import debug
+from base.design import design
 from base.hierarchy_spice import INOUT, OUTPUT
 
 if TYPE_CHECKING:
@@ -10,14 +12,17 @@ else:
     class Wrapper:
         pass
 
-control_pins = ["clk", "sense_trig", "web", "csb", "vref", "vclamp", "vclampp"]
-CLK, SENSE_TRIG, WEB, CSB, VREF, VCLAMP, VCLAMPP = control_pins
+control_pins = ["clk", "sense_trig", "web", "vref", "vclamp", "vclampp"]
+CLK, SENSE_TRIG, WEB, VREF, VCLAMP, VCLAMPP = control_pins
 control_pins = ["clk"]
 
-VDD_A1 = VDD_WORDLINE = "vdda1"
-VDD_A2 = VDD_WRITE = "vdda2"
+VDD_A1 = VDD_ESD = "vdda1"
+VDD_A2 = "vdda2"
 VCC_D1 = VDD = "vccd1"  # 1.8 V
 VCC_D2 = "vccd2"  # 1.8 V
+
+VDD_WRITE = "io_analog[2]"
+VDD_WORDLINE = "io_analog[1]"
 
 VSS_A1 = "vssa1"
 VSS_A2 = "vssa2"
@@ -74,17 +79,12 @@ def mask_in_pin(index):
     return f"mask[{index}]"
 
 
-class PinShortMod:
-    spice_device = "V{} {} 0"
-
-
-class PinShortInst:
-    def __init__(self, name):
-        self.name = name
-        self.mod = PinShortMod()
-
-    def gds_write_file(self, *args, **kwargs):
-        pass
+class PinShortMod(design):
+    def __init__(self, name, spice_device):
+        super().__init__(name)
+        self.spice_device = spice_device
+        self.add_pin_list(["p", "n"])
+        self.width = self.height = self.m1_width
 
 
 class PinAssignmentsMixin(Wrapper):
@@ -92,12 +92,6 @@ class PinAssignmentsMixin(Wrapper):
     num_address_pins = None
 
     def create_netlist(self):
-        pins = self.wrapper_inst.mod.pins
-        self.add_pin_list(pins)
-        debug.info(1, "Copying caravel pins to top level")
-        for pin_name in self.pins:
-            self.copy_layout_pin(self.wrapper_inst, pin_name)
-
         # sram connections
         sram_conns = [x for x in self.sram_inst.mod.pins]
         for sram_pin, caravel_pin in self.sram_to_wrapper_conns.items():
@@ -107,11 +101,32 @@ class PinAssignmentsMixin(Wrapper):
         self.conns[conn_index] = sram_conns
 
         # wrapper to vdd/gnd connections
-        # TODO shorts for LVS
-        for source_pin, dest_pin in self.wrapper_to_wrapper_conns.items():
-            inst_name = source_pin.replace("[", "_").replace("]", "")
-            self.insts.append(PinShortInst(inst_name))
-            self.conns.append([source_pin, dest_pin])
+        # for source_pin, dest_pin in self.wrapper_to_wrapper_conns.items():
+        #     spice_device, resistor_name = self.add_short_resistance(source_pin)
+        #     mod = PinShortMod(resistor_name, spice_device)
+        #     self.add_mod(mod)
+        #     self.add_inst(resistor_name, mod, offset=vector(0, 0))
+        #     self.connect_inst([source_pin, dest_pin])
+
+        # create lvs file with non-shorted pins
+        for pin_name in self.wrapper_inst.mod.pins:
+            self.copy_layout_pin(self.wrapper_inst, pin_name)
+            if pin_name not in self.wrapper_to_wrapper_conns:
+                self.add_pin(pin_name)
+
+        self.add_mod(self.sram_inst.mod)
+
+        temp_file = StringIO()
+        super().sp_write_file(temp_file, [])
+        temp_file.seek(0)
+        self.lvs_spice_content = temp_file.read()
+
+        # restore pins
+        self.mods.remove(self.sram_inst.mod)
+        debug.info(1, "Copying caravel pins to top level")
+        self.pins = [x for x in self.wrapper_inst.mod.pins]
+        for pin_name in self.wrapper_to_wrapper_conns:
+            self.copy_layout_pin(self.wrapper_inst, pin_name)
 
     def sp_write_file(self, sp, usedMODS):
         sp.write(f'.include "{self.sram_inst.mod.spice_file_name}"\n')
@@ -144,25 +159,24 @@ class PinAssignmentsMixin(Wrapper):
         self.wrapper_to_wrapper_conns[source_pin] = dest_pin
 
     def assign_analog_pins(self):
-        # assign analog pins to controls
-        self.assign(CLK, analog(7))
-        self.assign(SENSE_TRIG, analog(8))
-        self.assign(WEB, analog(9))
-        self.assign(CSB, analog(10))
 
-        self.assign(VCLAMP, analog(0))
-        self.assign(VCLAMPP, analog(1))
-        self.assign(VREF, analog(2))
+        # assign minimum viable sram pins to analog pins
+        self.assign(CLK, analog(9))
+        self.assign(SENSE_TRIG, analog(10))
+        self.assign(WEB, analog(0))
+
+        self.assign(VREF, analog(6))
+        self.assign(VCLAMP, analog(7))
+        self.assign(VCLAMPP, analog(8))
+
         # other analog pins
         self.assign(data_in_pin(0), analog(3))
         self.assign(data_out_pin(0), analog(4))
         self.assign(mask_in_pin(0), analog(5))
-        # io_analog[6] not assigned
 
-        for i in range(2):
-            # TODO: pre-tapeout - clarify clamp voltages
+        for i in range(3):
             self.assign_wrapper_power(f"io_clamp_low[{i}]", GND)
-            self.assign_wrapper_power(f"io_clamp_high[{i}]", VDD)
+            self.assign_wrapper_power(f"io_clamp_high[{i}]", VDD_ESD)
 
     @staticmethod
     def assign_gpio_pins(assignment_func):
@@ -174,9 +188,13 @@ class PinAssignmentsMixin(Wrapper):
         assignment_func("mask_others", analog_gpio(1))
 
         available_gpio = num_digital_gpio
-        available_analog_gpio = num_analog_gpio - 2
+        # bank sels
+        for i in range(4):
+            assignment_func(f"bank_sel[{i}]", analog_gpio(2 + i))
 
-        analog_gpio_index = 2
+        available_analog_gpio = num_analog_gpio - 6
+        analog_gpio_index = 2 + 4
+
         gpio_index = 0
 
         # all address pins are assigned
@@ -218,8 +236,12 @@ class PinAssignmentsMixin(Wrapper):
         # power
         self.assign("gnd", GND)
         self.assign("vdd", VDD)
-        self.assign("vdd_write", VDD_WRITE)
+
+        self.edge_grid_names = [GND, VDD_ESD, GND, VDD, GND, VDD_WORDLINE, GND, VDD_WRITE]
+
+        # assign analog pins to power
         self.assign("vdd_wordline", VDD_WORDLINE)
+        self.assign("vdd_write", VDD_WRITE)
 
         self.assign_analog_pins()
 

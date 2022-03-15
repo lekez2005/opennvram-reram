@@ -94,8 +94,8 @@ select top cell
 extract all
 ext2sim labels on
 ext2sim
-extresist simplify off
-extresist
+# extresist simplify off
+# extresist
 ext2spice lvs
 ext2spice format ngspice
 ext2spice scale off
@@ -270,7 +270,7 @@ def run_drc(cell_name, gds_name, exception_group="", flatten=None):
                 ignore_error = False
                 if exception_group in drc_exceptions:
                     for exception in drc_exceptions[exception_group]:
-                        if description == exception:
+                        if exception in description:
                             ignore_error = True
                             break
                 if ignore_error:
@@ -434,7 +434,8 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
 
 
 def run_pex(cell_name, gds_name, sp_name, output=None,
-            run_drc_lvs=True, correct_port_order=True, port_spice_file=None):
+            run_drc_lvs=True, correct_port_order=True, port_spice_file=None,
+            exception_group=""):
     """Run pex on a given top-level name which is
        implemented in gds_name and sp_name. """
     from globals import OPTS
@@ -451,7 +452,7 @@ def run_pex(cell_name, gds_name, sp_name, output=None,
 
     if run_drc_lvs or not os.path.exists(mag_file) or not os.path.exists(lvs_report):
         debug.info(1, "Forcing DRC + LVS runs before PEX")
-        run_drc(cell_name, gds_name)
+        run_drc(cell_name, gds_name, exception_group=exception_group)
         run_lvs(cell_name, gds_name, sp_name)
 
     debug.info(1, "Run PEX for {}".format(cell_name))
@@ -466,7 +467,7 @@ def run_pex(cell_name, gds_name, sp_name, output=None,
     debug.info(1, f"Generated pex spice {output}")
     from verify.calibre import correct_port
     # TODO confirm large number of pins
-    subckt_end_regex = re.compile(r"^[XRCM]+", re.MULTILINE)
+    subckt_end_regex = re.compile(r"^[XRCMD]+", re.MULTILINE)
     correct_port(cell_name, output, port_spice_file, subckt_end_regex=subckt_end_regex)
     remove_transistors_unit_suffix(output)
     return 0
@@ -481,7 +482,7 @@ def remove_transistors_unit_suffix(extracted_pex):
     regex = re.compile(rf"((\S+)=([0-9e+\-.]+)([{''.join(SUFFIXES.keys())}]+))")
     with open(extracted_pex, "w") as f:
         for line in lines:
-            if line.startswith("X"):
+            if line.startswith("X") or line.startswith("D"):
                 for match in regex.findall(line):
                     numeric_val = float(match[2]) * SUFFIXES[match[3]]
                     line = line.replace(match[0], f"{match[1]}={numeric_val:.8g}")

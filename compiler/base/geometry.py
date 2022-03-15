@@ -385,6 +385,10 @@ class rectangle(geometry):
                 return True
         return False
 
+    @property
+    def area(self):
+        return self.height * self.width
+
     def __str__(self):
         """ override print function output """
         offsets = [self.ll(), self.ur()]

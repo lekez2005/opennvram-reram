@@ -10,7 +10,8 @@ from base.geometry import instance, rectangle
 from base.pin_layout import pin_layout
 from base.vector import vector
 from globals import OPTS
-from pin_assignments_mixin import VDD_WORDLINE, VDD_WRITE, VDD, GND, VSS_D2, VSS_A2, VSS_A1, VCC_D2
+from pin_assignments_mixin import VDD_WORDLINE, VDD_WRITE, VDD, GND, VSS_D2, VSS_A2, VSS_A1, VCC_D2, VDD_ESD, VDD_A2
+from tech import spice as tech_spice
 
 if TYPE_CHECKING:
     from caravel_wrapper import CaravelWrapper
@@ -32,7 +33,7 @@ grid_padding = 50
 sram_padding = 10
 edge_power_grid_padding = 15
 
-internal_power_grid_padding = 50
+internal_power_grid_padding = 70
 
 power_grid_space = 1.7
 power_grid_width = 3.1
@@ -48,8 +49,7 @@ via_space_threshold = 2
 
 sense_pins = ["vclamp", "vclampp", "vref"]
 
-grid_names = [VDD_WRITE, VDD_WORDLINE, VDD, GND]
-edge_grid_names = [GND, VDD_WRITE, GND, VDD, GND, VDD_WORDLINE, GND]
+grid_names = [VDD_WRITE, VDD_WORDLINE, VDD_ESD, VDD, GND]
 
 
 class GridNode:
@@ -190,6 +190,36 @@ class RouterMixin(CaravelWrapper):
         self.route_sram_connections()
         self.add_power_grid()
         self.route_enables_to_grid()
+        self.add_esd_diodes()
+
+    def add_short_resistance(self, pin_name):
+        import caravel_config
+        pin_shift = caravel_config.res_short_pin_shift
+        resistor_name = f"{pin_name}_short".replace("[", "_").replace("]", "")
+
+        caravel_pin = self.wrapper_inst.get_pin(pin_name)
+        if self.is_top_pin(caravel_pin):
+            res_layer = METAL4
+            width = res_width = m4_width
+            height = res_length = self.m4_width
+            x_offset = caravel_pin.cx() - 0.5 * width
+            y_offset = caravel_pin.by() - pin_shift - height
+        else:
+            res_layer = METAL3
+            height = res_width = m3_width
+            width = res_length = self.m3_width
+            if caravel_pin.lx() < 0.5 * self.width:
+                x_offset = caravel_pin.rx() + pin_shift
+            else:
+                x_offset = caravel_pin.lx() - pin_shift - width
+            y_offset = caravel_pin.cy() - 0.5 * height
+        self.add_rect(f"res_{res_layer}", vector(x_offset, y_offset),
+                      width=width, height=height)
+
+        res_name = tech_spice[f"{res_layer}_res_name"]
+        spice_device = f"R{{0}} {{1}} {res_name} w={res_width:.3g} " \
+                       f"l={res_length:.3g}"
+        return spice_device, resistor_name
 
     def add_x_rail(self, x_start, x_end, y_mid, net, is_start, is_end):
 
@@ -490,7 +520,7 @@ class RouterMixin(CaravelWrapper):
             grid[pin_name].append(pin)
             self.add_power_via(x_offset, y_offset, shift_center=True)
 
-        for i, pin_name in enumerate(edge_grid_names):
+        for i, pin_name in enumerate(self.edge_grid_names):
             offset = edge_power_grid_padding + i * power_grid_pitch
 
             bottom_y = offset
@@ -613,7 +643,7 @@ class RouterMixin(CaravelWrapper):
     def add_internal_power_grid(self):
         if not OPTS.add_internal_grid:
             return
-        pin_order = [GND, VDD, GND, VDD_WORDLINE, GND, VDD, GND, VDD_WRITE]
+        pin_order = [VDD_ESD, GND, VDD, GND, VDD_WORDLINE, GND, VDD, GND, VDD_WRITE]
         num_grid = len(pin_order)
 
         def assign_grid(span, lower_obstruction, higher_obstruction):
@@ -646,13 +676,13 @@ class RouterMixin(CaravelWrapper):
             self.add_vertical_connections(rect, pin_order[i % num_grid])
 
     def route_caravel_power(self):
-        pin_map = {VSS_D2: GND, VSS_A2: GND, VSS_A1: GND, VCC_D2: VDD}
+        pin_map = {VSS_D2: GND, VSS_A2: GND, VSS_A1: GND, VCC_D2: VDD, VDD_A2: VDD_ESD}
         for key, value in pin_map.items():
             self.assign_wrapper_power(key, value)
 
         self.power_pin_map = pin_map
 
-        power_pins = list(pin_map.keys()) + [GND, VDD, VDD_WORDLINE, VDD_WRITE]
+        power_pins = list(pin_map.keys()) + [GND, VDD, VDD_WORDLINE, VDD_WRITE, VDD_ESD]
         for pin_name in power_pins:
             dest_name = pin_map.get(pin_name, pin_name)
             for source_pin in self.wrapper_inst.get_pins(pin_name):

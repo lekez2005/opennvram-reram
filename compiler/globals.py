@@ -117,7 +117,7 @@ def init_openram(config_file, is_unit_test=True, openram_temp=None):
     if openram_temp is not None:
         OPTS.set_temp_folder(openram_temp)
 
-    initialize_home_tech()
+    initialize_home_and_tech()
 
     check_versions()
 
@@ -158,7 +158,7 @@ def get_tool(tool_type, preferences, default=None):
         return (None, "")
 
 
-def initialize_home_tech():
+def initialize_home_and_tech():
     for (variable, dir_name) in [("OPENRAM_HOME", "compiler"), ("OPENRAM_TECH", "technology")]:
         if not os.environ.get(f"FORCE_{variable}", False):
             openram_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))

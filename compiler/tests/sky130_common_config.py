@@ -4,6 +4,8 @@ process_corners = ["TT"]
 supply_voltages = [1.8]
 temperatures = [25]
 
+diode = "diode.Diode"
+
 logic_buffers_height = 3.9
 
 control_buffers_num_rows = 1

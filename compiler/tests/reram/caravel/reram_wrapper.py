@@ -3,6 +3,9 @@ import itertools
 import math
 import os
 
+import caravel_config
+from base.spice_parser import SpiceParser
+from caravel_config import sram_configs, module_y_space, rail_pitch, rail_width
 import debug
 import tech
 from base import utils
@@ -17,47 +20,10 @@ from base.vector import vector
 from pin_assignments_mixin import PinAssignmentsMixin
 from router_mixin import METAL6
 
-default_base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                                "../../../.."))
-base_dir = os.environ.get("CARAVEL_WORKSPACE", default_base_dir)
-gds_dir = os.path.join(base_dir, "gds")
-xschem_dir = os.path.join(base_dir, "xschem")
-verilog_dir = os.path.join(base_dir, "verilog", "rtl")
-spice_dir = os.path.join(base_dir, "netgen")
-
-mid_control_pins = ["clk", "sense_trig", "web", "csb"]
-
-module_x_space = 5
-module_y_space = 5
-
-rail_width = m3m4.w_1
-rail_space = 0.35
-rail_pitch = rail_width + rail_space
-
-
-class SramConfig:
-    sram = None
-
-    def __init__(self, word_size, num_rows, words_per_row, num_banks=1):
-        self.word_size = word_size
-        self.num_rows = num_rows
-        self.num_banks = num_banks
-        self.words_per_row = words_per_row
-
-        self.num_words = num_banks * words_per_row * num_rows
-        self.address_width = int(math.log2(self.num_words))
-
-        banks_str = f"_bank_{num_banks}" * (num_banks > 1)
-        words_per_row_str = f"_wpr_{words_per_row}" * (words_per_row > 1)
-        self.module_name = f"r_{self.num_rows}_w_{word_size}{words_per_row_str}{banks_str}"
-
-    @property
-    def gds_file(self):
-        return os.path.join(gds_dir, f"{self.module_name}.gds")
-
-    @property
-    def spice_file(self):
-        return os.path.join(base_dir, "netgen", f"{self.module_name}.spice")
+top_left = sram_configs[0]
+top_right = sram_configs[1]
+bottom_left = sram_configs[2]
+bottom_right = sram_configs[3]
 
 
 class LoadFromGDS(design):
@@ -102,26 +68,6 @@ class LoadFromGDS(design):
         return self.get_pins(text)[0]
 
 
-sram_configs = [
-    SramConfig(word_size=64, num_rows=64, words_per_row=1),
-    SramConfig(word_size=32, num_rows=32, words_per_row=1),
-    SramConfig(word_size=64, num_rows=64, words_per_row=2),
-    SramConfig(word_size=16, num_rows=16, words_per_row=1)
-]
-
-# sram_configs = [
-#     SramConfig(word_size=8, num_rows=32, words_per_row=1),
-#     SramConfig(word_size=8, num_rows=32, words_per_row=1),
-#     SramConfig(word_size=8, num_rows=32, words_per_row=1),
-#     SramConfig(word_size=8, num_rows=32, words_per_row=1)
-# ]
-
-top_left = sram_configs[0]
-top_right = sram_configs[1]
-bottom_left = sram_configs[2]
-bottom_right = sram_configs[3]
-
-
 class Sram(LoadFromGDS):
     pass
 
@@ -131,6 +77,7 @@ class ReRamWrapper(design):
         design.__init__(self, "sram1")
         debug.info(1, "Creating Sram Wrapper %s", self.name)
         self.create_layout()
+        tech.add_tech_layers(self)
         self.generate_spice()
         self.generate_verilog()
 
@@ -170,7 +117,7 @@ class ReRamWrapper(design):
         for i, bank in enumerate(self.bank_insts):
             connections = self.conns[self.insts.index(bank)]
             for net in connections:
-                if not net.startswith("data_out_internal[") and net not in self.pin_map:
+                if not net.startswith("data_out_internal_") and net not in self.pin_map:
                     unconnected_pins.append((i, net))
         if unconnected_pins:
             debug.error(f"Unconnected bank pins: %s", -1, str(unconnected_pins))
@@ -186,8 +133,16 @@ class ReRamWrapper(design):
                 sram = LoadFromGDS(config.module_name, config.gds_file, config.spice_file)
                 self.sram_mods[config.module_name] = sram
                 create_count += 1
+                suffix = f"_ram{create_count}"
                 if create_count > 1:
-                    sram.gds.add_suffix_to_structures(f"_n{create_count}")
+                    sram.gds.add_suffix_to_structures(suffix)
+                    parser = SpiceParser(config.spice_file)
+                    parser.add_module_suffix(suffix=suffix, exclusions=[sram.name])
+                    temp_spice = parser.export_spice()
+                    sram.spice = []
+                    for line in temp_spice:
+                        sram.spice.append(line.replace(f"sky130_fd_pr__reram_reram_cell{suffix}",
+                                                       "sky130_fd_pr__reram_reram_cell"))
 
             sram.word_size = config.word_size
             config.sram = sram
@@ -195,7 +150,10 @@ class ReRamWrapper(design):
             debug.info(1, "Loaded SRAM sub-bank %s", sram.name)
 
     def evaluate_pins(self):
-        num_rails = PinAssignmentsMixin.num_address_pins + len(mid_control_pins)
+        if PinAssignmentsMixin.num_address_pins is None:
+            from caravel_wrapper import CaravelWrapper
+            CaravelWrapper.analyze_sizes()
+        num_rails = PinAssignmentsMixin.num_address_pins + len(caravel_config.mid_control_pins)
 
         def noop(*args):
             pass
@@ -206,9 +164,12 @@ class ReRamWrapper(design):
         num_rails += 3 * self.num_data_out + 2
         # G S G S G for clk, sense_trig
         num_rails += 3
+        # bank sels
+        num_rails += 4
 
         self.num_rails = num_rails
-        self.y_mid_space = 2 * module_y_space + self.num_rails * rail_pitch - rail_space
+        self.y_mid_space = (2 * caravel_config.module_y_space + self.num_rails *
+                            caravel_config.rail_pitch - caravel_config.rail_space)
 
         self.m3_fill_width = m2m3.h_2
         _, self.m3_fill_height = self.calculate_min_area_fill(self.m3_fill_width,
@@ -246,7 +207,7 @@ class ReRamWrapper(design):
         x_shift = align_vdd_x(top_left.sram, bottom_left.sram)
         bottom_left_x = top_left_x - x_shift
 
-        x_offset = max(bottom_left_x, top_left_x) + module_x_space
+        x_offset = max(bottom_left_x, top_left_x) + caravel_config.module_x_space
         x_shift = align_vdd_x(top_right.sram, bottom_right.sram)
 
         top_right_x = x_offset
@@ -284,9 +245,7 @@ class ReRamWrapper(design):
 
     def connect_indirect_rail_pins(self):
 
-        via_y_ext = 0.5 * max(m2m3.h_1, m3m4.h_2)
-
-        m2_pin_names = ["csb", "clk", "web", "sense_trig"]
+        m2_pin_names = ["clk", "web", "sense_trig", "csb"]
         m2_rails = []
 
         # make unique
@@ -333,6 +292,8 @@ class ReRamWrapper(design):
                                             width=pin.width(), height=pin.width())
                 rect.layer = pin.layer
                 rail[0] = rect
+                self.add_rect(METAL3, vector(rect.cx(), rail[1] - 0.5 * rail_width),
+                              width=pin.cx() - rect.cx(), height=rail_width)
 
         for index, (pin, y_offset) in enumerate(pins_to_mid_rails):
             if pin.by() > self.mid_rail_y:
@@ -444,13 +405,21 @@ class ReRamWrapper(design):
         return alt_bits
 
     def join_address_pins(self):
+
+        # bank sels
+        self.bank_sel_pins = [f"bank_sel[{bank_index}]" for bank_index in range(4)]
+        for bank_index in range(4):
+            bank_sel = self.bank_sel_pins[bank_index]
+            self.connection_replacements[bank_index]["csb"] = bank_sel
+            self.join_pins(pin_name=bank_sel, pins=[self.bank_insts[bank_index].get_pin("csb")])
+            self.increment_y_index()
+
         bits = list(range(PinAssignmentsMixin.num_address_pins))
         alt_bits = self.alternate_bits(bits)
         for bit in alt_bits:
             all_pins = []
             pin_name = f"ADDR[{bit}]"
             for bank in self.bank_insts:
-                # debug.pycharm_debug()
                 if pin_name.lower() in bank.mod.pins:
                     pin = bank.get_pin(pin_name)
                     all_pins.append(pin)
@@ -459,6 +428,7 @@ class ReRamWrapper(design):
             self.increment_y_index()
 
     def join_data_pins(self):
+
         pin_names = []
         num_data = self.num_data_out - 1
 
@@ -489,6 +459,7 @@ class ReRamWrapper(design):
 
         alt_pin_names = self.alternate_bits(pin_names)
         for pin_name, wrapper_bit in alt_pin_names:
+            join_pins = True
             pins = []
             if pin_name in other_pins:
                 pins = []
@@ -497,7 +468,8 @@ class ReRamWrapper(design):
                     for bank_bit in un_assigned_bits[bank_index]:
                         bank_pin = bank.get_pin(f"{bank_pin_name}[{bank_bit}]")
                         if pin_name == "data_out_others":
-                            replacement = f"data_out_internal[{bank_bit}]"
+                            replacement = f"data_out_internal_{bank_index}[{bank_bit}]"
+                            join_pins = False
                         else:
                             replacement = pin_name
                         self.connection_replacements[bank_index][bank_pin.name] = replacement
@@ -511,8 +483,9 @@ class ReRamWrapper(design):
                         self.connection_replacements[bank_index][bank_pin.name] = wrapper_name
                         pins.append(bank_pin)
                 pin_name = wrapper_name
-            self.join_pins(pin_name=pin_name, pins=pins)
-            self.increment_y_index()
+            if join_pins:
+                self.join_pins(pin_name=pin_name, pins=pins)
+                self.increment_y_index()
 
     def increment_y_index(self):
         y_index = self.rail_y_index
@@ -525,7 +498,7 @@ class ReRamWrapper(design):
         debug.info(1, "Joining sub-bank pins")
         # control rails
         y_indices = [-3, -1, 1, 3]
-        pin_names = ["csb", "clk", "sense_trig", "web"]
+        pin_names = ["clk", "sense_trig", "web"]
         for pin_name, y_index in zip(pin_names, y_indices):
             self.join_pins(y_index, pin_name=pin_name)
 
@@ -574,20 +547,20 @@ class ReRamWrapper(design):
                                     width=m6_sample.width(), height=self.height)
 
     def generate_spice(self):
-        file_name = os.path.join(spice_dir, f"{self.name}.spice")
+        file_name = os.path.join(caravel_config.spice_dir, f"{self.name}.spice")
         self.spice_file_name = file_name
         debug.info(1, "Reram spice file is %s", file_name)
         self.sp_write(file_name)
 
     def get_pin_type(self, pin_name):
-        inputs = ["sense_trig", "vref", "vclamp", "vclampp", "csb", "web", "clk",
+        inputs = ["sense_trig", "vref", "vclamp", "vclampp", "web", "clk",
                   "data_others", "mask_others"]
 
         prefixes = {
+            "bank_sel[": (INPUT, len(sram_configs)),
             "data[": (INPUT, self.num_data_out),
             "mask[": (INPUT, self.num_data_out),
             "data_out[": (OUTPUT, self.num_data_out),
-            "data_out_internal[": (OUTPUT, self.num_data_out),
             "addr[": (INPUT, PinAssignmentsMixin.num_address_pins)
         }
 
@@ -610,7 +583,7 @@ class ReRamWrapper(design):
         return pin_type, pin_name
 
     def generate_verilog(self):
-        file_name = os.path.join(verilog_dir, f"{self.name}.v")
+        file_name = os.path.join(caravel_config.verilog_dir, f"{self.name}.v")
         debug.info(1, "Reram Verilog file is %s", file_name)
         with open(file_name, "w") as f:
             f.write(f"// Generated from OpenRAM\n\n")

@@ -116,6 +116,9 @@ class SpiceMod:
     def __str__(self):
         return f"SpiceMod: ({self.name}: [{', '.join(self.pins)}])"
 
+    def __repr__(self):
+        return str(self)
+
 
 class SpiceParser:
 
@@ -208,7 +211,7 @@ class SpiceParser:
         nf = int(tx_extract_parameter("nf", spice_statement) or 1)
 
         width = tx_extract_parameter("w", spice_statement)
-        return tx_type, m, nf, width/nf
+        return tx_type, m, nf, width / nf
 
     def extract_caps_for_pin(self, pin_name, module_name):
         """
@@ -302,7 +305,7 @@ class SpiceParser:
                 continue
             elif depth >= max_depth:
                 continue
-            else:   # intermediate node
+            else:  # intermediate node
                 if len(child[:-1]) > 0:
                     next_route = ".".join(child[:-1]) + "." + adjacent_net
                 else:
@@ -316,3 +319,24 @@ class SpiceParser:
                 final_paths.append([spice_statement] + path)
 
         return final_paths
+
+    def add_module_suffix(self, suffix, exclusions=None):
+        exclusions = exclusions or []
+        # rename mods
+        for mod in self.mods:
+            if mod.name not in exclusions:
+                mod.name += suffix
+            for i, spice_statement in enumerate(mod.contents):
+                if self.line_contains_tx(spice_statement):
+                    continue
+                child_module_name = spice_statement.split()[-1]
+                new_line = spice_statement.split()[:-1] + [(child_module_name + suffix)]
+                mod.contents[i] = " ".join(new_line)
+
+    def export_spice(self):
+        content = []
+        for mod in self.mods:
+            content.append(f".subckt {mod.name} {' '.join(mod.pins)}")
+            content.extend(mod.contents)
+            content.append(".ends\n")
+        return content

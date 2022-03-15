@@ -26,7 +26,7 @@ def set_default_insts(self, insts: InstList, inst_indices: IntList):
 
 
 def flatten_rects(self: design, insts: InstList = None,
-                  inst_indices: IntList = None):
+                  inst_indices: IntList = None, skip_export_spice=False):
     """Move rects in insts to top-level 'self' """
 
     insts, inst_indices = set_default_insts(self, insts, inst_indices)
@@ -36,7 +36,7 @@ def flatten_rects(self: design, insts: InstList = None,
     for conn_index in inst_indices:
         if self.conns[conn_index]:
             should_export = True
-    if should_export:
+    if should_export and not skip_export_spice:
         export_spice(self)
 
     flat_rects = self.get_layer_shapes(layer=None, recursive=True, insts=insts)

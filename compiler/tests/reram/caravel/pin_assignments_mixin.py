@@ -143,16 +143,31 @@ class PinAssignmentsMixin(Wrapper):
         assert wrapper_pin not in self.sram_to_wrapper_conns.values()
 
         if wrapper_pin.startswith(GPIO + "["):
+            pin_mode = GPIO
+        elif wrapper_pin.startswith(GPIO_ANALOG + "["):
+            pin_mode = GPIO_ANALOG
+        else:
+            pin_mode = ANALOG
+
+        if pin_mode in [GPIO, GPIO_ANALOG]:
             pin_type, _ = self.sram.get_pin_type(sram_pin)
             assert not pin_type == INOUT, "inout not permitted for gpio pin"
-            bit = wrapper_pin.replace(GPIO, "")
+
+            bit = wrapper_pin.replace(pin_mode, "")
+            if pin_mode == GPIO_ANALOG:
+                bit_int = int(bit[1:-1]) + 7
+                bit = f"[{bit_int}]"
+            else:
+                if pin_type == OUTPUT:
+                    wrapper_pin = GPIO_OUT + bit
+                else:
+                    wrapper_pin = GPIO_IN + bit
+
             oeb_pin = OEB + bit
             if pin_type == OUTPUT:
-                wrapper_pin = GPIO_OUT + bit
                 oeb_val = GND
             else:
                 oeb_val = VDD
-                wrapper_pin = GPIO_IN + bit
             self.assign_wrapper_power(oeb_pin, oeb_val)
             debug.info(2, f"{oeb_pin:<15s} <==> {oeb_val}")
         debug.info(2, f"{sram_pin:<15s} <==> {wrapper_pin}")

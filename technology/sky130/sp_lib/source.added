@@ -10,3 +10,6 @@ m1 d g s b pmos l = 'l' w = 'w' nf = 'nf' ad = 'ad' as = 'as' pd = 'pd' ps = 'ps
 
 .subckt sky130_fd_pr__reram_reram_cell te be
 .ends
+
+.subckt sky130_fd_pr__cap_mim_m3_2 c0 c1
+.ends

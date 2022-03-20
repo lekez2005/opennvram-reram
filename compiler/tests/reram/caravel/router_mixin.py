@@ -10,6 +10,7 @@ from base.geometry import instance, rectangle
 from base.pin_layout import pin_layout
 from base.vector import vector
 from globals import OPTS
+from mim_capacitor import MimCapacitor
 from pin_assignments_mixin import VDD_WORDLINE, VDD, GND, VSS_D2, VSS_A2, VSS_A1, VCC_D2, VDD_ESD, VDD_A2
 from tech import spice as tech_spice
 
@@ -33,7 +34,8 @@ grid_padding = 50
 sram_padding = 10
 edge_power_grid_padding = 15
 
-internal_power_grid_padding = 70
+internal_power_grid_obstruction_padding = 50
+internal_power_grid_padding = 80
 
 power_grid_space = 1.7
 power_grid_width = 3.1
@@ -41,6 +43,8 @@ power_grid_pitch = power_grid_width + power_grid_space
 
 internal_grid_space = 20
 internal_grid_pitch = internal_grid_space + power_grid_width
+
+decoupling_cap_width = decoupling_cap_height = 15
 
 grid_space = 3
 m3_width = 0.28
@@ -434,10 +438,13 @@ class RouterMixin(CaravelWrapper):
     def add_power_grid(self):
         self.vert_power_grid = {key: [] for key in self.grid_names_set}
         self.horz_power_grid = {key: [] for key in self.grid_names_set}
+        self.vert_power_internal_grid = {key: [] for key in self.grid_names_set}
+        self.horz_power_internal_grid = {key: [] for key in self.grid_names_set}
 
         self.add_edge_power_grid()
         self.connect_sram_power()
         self.add_internal_power_grid()
+        self.add_decoupling_cap()
         self.route_caravel_power()
 
     def add_power_via(self, x_offset, y_offset, shift_center=False):
@@ -457,9 +464,16 @@ class RouterMixin(CaravelWrapper):
 
         return to_rect(rect1).overlaps(to_rect(rect2))
 
-    def add_vertical_connections(self, rect, grid_pin_name):
-        self.vert_power_grid[grid_pin_name].append(rect)
+    def add_connections(self, rect, grid_pin_name, power_grid):
+        for dest_pin in power_grid[grid_pin_name]:
+            if not self.is_overlap(dest_pin, rect):
+                continue
+            self.add_power_via(rect.cx(), dest_pin.cy())
 
+    def add_vertical_connections(self, rect, grid_pin_name, is_internal_grid=False):
+        self.vert_power_grid[grid_pin_name].append(rect)
+        if is_internal_grid:
+            self.vert_power_internal_grid[grid_pin_name].append(rect)
         for dest_pin in self.horz_power_grid[grid_pin_name]:
             if not self.is_overlap(dest_pin, rect):
                 continue
@@ -476,9 +490,10 @@ class RouterMixin(CaravelWrapper):
                              height=pin.by())
         self.add_vertical_connections(rect, grid_pin_name)
 
-    def add_horizontal_connections(self, rect, grid_pin_name):
+    def add_horizontal_connections(self, rect, grid_pin_name, is_internal_grid=False):
         self.horz_power_grid[grid_pin_name].append(rect)
-
+        if is_internal_grid:
+            self.horz_power_internal_grid[grid_pin_name].append(rect)
         for dest_pin in self.vert_power_grid[grid_pin_name]:
             if not self.is_overlap(dest_pin, rect):
                 continue
@@ -648,11 +663,11 @@ class RouterMixin(CaravelWrapper):
         def assign_grid(span, lower_obstruction, higher_obstruction):
             offsets = []
             offset = internal_power_grid_padding
-            while offset < lower_obstruction - internal_power_grid_padding:
+            while offset < lower_obstruction - internal_power_grid_obstruction_padding:
                 offsets.append(offset)
                 offset += internal_grid_pitch
 
-            offset = higher_obstruction + internal_power_grid_padding
+            offset = higher_obstruction + internal_power_grid_obstruction_padding
             while offset < span - internal_power_grid_padding:
                 offsets.append(offset)
                 offset += internal_grid_pitch
@@ -664,7 +679,7 @@ class RouterMixin(CaravelWrapper):
             rect = self.add_rect(METAL5, vector(edge_power_grid_padding, horizontal_grid[i]),
                                  height=power_grid_width,
                                  width=self.width - 2 * edge_power_grid_padding)
-            self.add_horizontal_connections(rect, pin_order[i % num_grid])
+            self.add_horizontal_connections(rect, pin_order[i % num_grid], is_internal_grid=True)
 
         vertical_grid = assign_grid(self.width, self.sram_inst.lx(),
                                     self.sram_inst.rx())
@@ -672,7 +687,27 @@ class RouterMixin(CaravelWrapper):
             rect = self.add_rect(METAL6, vector(vertical_grid[i], 0),
                                  height=self.height - edge_power_grid_padding,
                                  width=power_grid_width)
-            self.add_vertical_connections(rect, pin_order[i % num_grid])
+            self.add_vertical_connections(rect, pin_order[i % num_grid], is_internal_grid=True)
+
+    def add_decoupling_cap(self):
+        debug.info(1, "Adding decoupling caps")
+        self.decoupling_cap = MimCapacitor(width=decoupling_cap_width, height=decoupling_cap_height)
+        via_shift = vector(0.5 * self.decoupling_cap.width, 0.5 * self.decoupling_cap.height)
+        self.add_mod(self.decoupling_cap)
+        power_pins = self.vdd_write_pins + [VDD, VDD_WORDLINE, VDD_ESD]
+        self.decoupling_caps = {}
+        for power_pin in power_pins:
+            self.decoupling_caps[power_pin] = []
+            index = 0
+            for power_rect in self.vert_power_internal_grid[power_pin]:
+                for gnd_rect in self.horz_power_internal_grid[GND]:
+                    offset = vector(power_rect.cx(), gnd_rect.cy()) - via_shift
+                    inst = self.add_inst(f"{power_pin}_decouple_{index}", self.decoupling_cap,
+                                         offset=offset)
+                    self.connect_inst([power_pin, GND])
+                    self.decoupling_caps[power_pin].append(inst)
+                    index += 1
+        debug.info(1, "Added decoupling caps")
 
     def route_caravel_power(self):
         pin_map = {VSS_D2: GND, VSS_A2: GND, VSS_A1: GND, VCC_D2: VDD, VDD_A2: VDD_ESD}
@@ -680,6 +715,7 @@ class RouterMixin(CaravelWrapper):
             self.assign_wrapper_power(key, value)
 
         self.power_pin_map = pin_map
+        debug.info(1, "Routing caravel power pins to power grid")
 
         power_pins = list(pin_map.keys()) + [GND, VDD, VDD_WORDLINE, VDD_ESD] + self.vdd_write_pins
         for pin_name in power_pins:

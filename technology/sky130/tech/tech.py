@@ -18,7 +18,7 @@ info["name"] = "sky130"
 info["has_pwell"] = False
 info["has_nwell"] = True
 
-drc_name = "magic"
+drc_name = "klayout"
 lvs_name = "netgen"
 pex_name = "magic"
 
@@ -61,7 +61,8 @@ layer = {
     "reram_ox": 201,
     "diode": 81,
     "res_metal3": 69,
-    "res_metal4": 70
+    "res_metal4": 70,
+    "cap2m": 97,
 }
 
 purpose = {
@@ -75,6 +76,7 @@ purpose = {
     "via3": 44,
     "via4": 44,
     "via5": 44,
+    "cap2m": 44,
     "diode": 23,
     "res_metal3": 13,
     "res_metal4": 13,
@@ -94,6 +96,14 @@ power_grid_width = 4
 
 power_grid_y_space = 3.5
 power_grid_x_space = 3.5
+
+# MIM cap
+mim_cap_top_layer = "metal6"
+mim_cap_bottom_layer = "metal5"
+mim_cap_via_layer = "via5"
+mim_cap_cap_layer = "cap2m"
+mim_cap_bottom_enclosure = 0.14
+mim_cap_top_enclosure = 0.0
 
 #########################
 # Parameter
@@ -242,6 +252,7 @@ spice["nmos"] = "sky130_fd_pr__nfet_01v8"
 spice["pmos"] = "sky130_fd_pr__pfet_01v8"
 spice["p_diode_name"] = "sky130_fd_pr__diode_pw2nd_05v5"
 spice["n_diode_name"] = "sky130_fd_pr__diode_pd2nw_05v5"
+spice["mim_cap_name"] = "sky130_fd_pr__cap_mim_m3_2"
 spice["metal3_res_name"] = "sky130_fd_pr__res_generic_m2"
 spice["metal4_res_name"] = "sky130_fd_pr__res_generic_m3"
 spice["subckt_nmos"] = "msky130_fd_pr__nfet_01v8"

@@ -246,6 +246,10 @@ class instance(geometry):
             rect.size = vector(rect.width, rect.height)
             results.append(rect)
         return results
+
+    def get_max_shape(self, layer, prop_name, recursive=False):
+        shapes = self.get_layer_shapes(layer, recursive=recursive)
+        return self.mod.get_max_shape_(shapes, prop_name=prop_name)
         
     def __str__(self):
         """ override print function output """

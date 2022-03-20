@@ -1,11 +1,8 @@
 """Combine multiple SRAM banks into one"""
-import itertools
 import math
 import os
 
 import caravel_config
-from base.spice_parser import SpiceParser
-from caravel_config import sram_configs, module_y_space, rail_pitch, rail_width
 import debug
 import tech
 from base import utils
@@ -15,8 +12,11 @@ from base.geometry import MIRROR_Y_AXIS, NO_MIRROR, MIRROR_X_AXIS, MIRROR_XY
 from base.hierarchy_layout import layout as hierarchy_layout
 from base.hierarchy_spice import spice as hierarchy_spice, INPUT, OUTPUT, INOUT
 from base.pin_layout import pin_layout
+from base.spice_parser import SpiceParser
 from base.utils import pin_rect, round_to_grid as round_
 from base.vector import vector
+from caravel_config import sram_configs, module_y_space, rail_pitch, rail_width
+from globals import OPTS
 from pin_assignments_mixin import PinAssignmentsMixin
 from router_mixin import METAL6
 
@@ -77,8 +77,10 @@ class ReRamWrapper(design):
         design.__init__(self, "sram1")
         debug.info(1, "Creating Sram Wrapper %s", self.name)
         self.create_layout()
+        self.add_boundary()
         tech.add_tech_layers(self)
         self.generate_spice()
+        self.generate_gds()
         self.generate_verilog()
 
     def create_layout(self):
@@ -130,7 +132,7 @@ class ReRamWrapper(design):
             if config.module_name in self.sram_mods:
                 sram = self.sram_mods[config.module_name]
             else:
-                sram = LoadFromGDS(config.module_name, config.gds_file, config.spice_file)
+                sram = LoadFromGDS(config.module_name, config.get_gds_file(), config.spice_file)
                 self.sram_mods[config.module_name] = sram
                 create_count += 1
                 suffix = f"_ram{create_count}"
@@ -407,7 +409,7 @@ class ReRamWrapper(design):
     def join_address_pins(self):
 
         # bank sels
-        self.bank_sel_pins = [f"bank_sel[{bank_index}]" for bank_index in range(4)]
+        self.bank_sel_pins = [f"bank_sel_b[{bank_index}]" for bank_index in range(4)]
         for bank_index in range(4):
             bank_sel = self.bank_sel_pins[bank_index]
             self.connection_replacements[bank_index]["csb"] = bank_sel
@@ -513,7 +515,11 @@ class ReRamWrapper(design):
     def add_power_grid(self):
         debug.info(1, "Joining sub-banks power grid")
         # Note this only works when there is only one "vdd_wordline"
-        for pin_name in ["vdd_write", "vdd_wordline"]:
+        if OPTS.separate_vdd_write:
+            self.vdd_write_pins = ["vdd_write_bl", "vdd_write_br"]
+        else:
+            self.vdd_write_pins = ["vdd_write"]
+        for pin_name in ["vdd_wordline"] + self.vdd_write_pins:
             for bank in self.bank_insts:
                 self.copy_layout_pin(bank, pin_name)
         for pin_name in ["vdd", "gnd"]:
@@ -546,18 +552,26 @@ class ReRamWrapper(design):
                                     vector(x_offset - 0.5 * m6_sample.width(), 0),
                                     width=m6_sample.width(), height=self.height)
 
+    def get_spice_file(self):
+        return os.path.join(caravel_config.spice_dir, f"{self.name}.spice")
+
     def generate_spice(self):
-        file_name = os.path.join(caravel_config.spice_dir, f"{self.name}.spice")
+        file_name = self.get_spice_file()
         self.spice_file_name = file_name
         debug.info(1, "Reram spice file is %s", file_name)
         self.sp_write(file_name)
+
+    def generate_gds(self):
+        file_name = os.path.join(caravel_config.gds_dir, f"{self.name}.gds")
+        debug.info(1, "Reram gds file is %s", file_name)
+        self.gds_write(file_name)
 
     def get_pin_type(self, pin_name):
         inputs = ["sense_trig", "vref", "vclamp", "vclampp", "web", "clk",
                   "data_others", "mask_others"]
 
         prefixes = {
-            "bank_sel[": (INPUT, len(sram_configs)),
+            "bank_sel_b[": (INPUT, len(sram_configs)),
             "data[": (INPUT, self.num_data_out),
             "mask[": (INPUT, self.num_data_out),
             "data_out[": (OUTPUT, self.num_data_out),
@@ -569,7 +583,7 @@ class ReRamWrapper(design):
         pin_name = pin_name.lower()
         if pin_name in inputs:
             pin_type = INPUT
-        elif pin_name in ["vdd", "gnd", "vdd_write", "vdd_wordline"]:
+        elif pin_name in ["vdd", "gnd", "vdd_write", "vdd_wordline", "vdd_write_bl", "vdd_write_br"]:
             pin_type = INOUT
         else:
             for prefix in prefixes:

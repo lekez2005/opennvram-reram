@@ -1,4 +1,4 @@
-from base.contact import m2m3, m1m2, cross_m2m3, cross_m1m2
+from base.contact import m2m3, m1m2, cross_m2m3
 from base.design import ACTIVE, METAL2, METAL3
 from base.vector import vector
 from base.well_active_contacts import calculate_num_contacts
@@ -7,14 +7,15 @@ from modules.reram.write_driver_pgate import WriteDriverPgate
 
 
 class WriteDriverPgateSeparateVdd(WriteDriverPgate):
+    """Note deprecated"""
     mod_name = "write_driver_sep_vdd"
     tx_count = 0  # keep track of tx count to detect when buffer tx is created
 
     def add_pins(self):
         # set based on the biggest vdd voltage
-        self.pmos_body_vdd = getattr(OPTS, "write_driver_pmos_vdd", "vdd_br")
+        self.pmos_body_vdd = getattr(OPTS, "write_driver_pmos_vdd", "vdd_write_br")
         self.add_pin_list("data data_bar mask_bar en en_bar "
-                          "bl br vdd vdd_bl vdd_br gnd".split())
+                          "bl br vdd vdd_write_bl vdd_write_br gnd".split())
 
     def create_ptx(self, size, is_pmos=False, **kwargs):
         """Use two fingers for the buffer fets"""
@@ -48,9 +49,9 @@ class WriteDriverPgateSeparateVdd(WriteDriverPgate):
                        ("br", "en", "br_n_mid"),
                        ("br_n_mid", "br_bar", "gnd")]
         buffer_pmos = [("bl", "en_bar", "bl_p_mid"),
-                       ("bl_p_mid", "bl_bar", "vdd_bl"),
+                       ("bl_p_mid", "bl_bar", "vdd_write_bl"),
                        ("br", "en_bar", "br_p_mid"),
-                       ("br_p_mid", "br_bar", "vdd_br")]
+                       ("br_p_mid", "br_bar", "vdd_write_br")]
         return buffer_nmos, buffer_pmos
 
     def add_ptx_spice(self, name, spice_mod, connections):
@@ -102,13 +103,13 @@ class WriteDriverPgateSeparateVdd(WriteDriverPgate):
 
     def get_power_pin_combinations(self):
         return [("gnd", self.logic_nmos_inst, "S"),
-                ("vdd_br", self.buffer_pmos_inst_1, "D"),
+                ("vdd_write_br", self.buffer_pmos_inst_1, "D"),
                 ("gnd", self.buffer_nmos_inst, "S"),
                 ("gnd", self.buffer_nmos_inst_1, "D")]
 
     def route_tx_power(self):
         super().route_tx_power()
-        for tx_inst, pin_name, vdd_name in [(self.buffer_pmos_inst, "S", "vdd_bl"),
+        for tx_inst, pin_name, vdd_name in [(self.buffer_pmos_inst, "S", "vdd_write_bl"),
                                             (self.logic_pmos_inst, "D", "vdd")]:
             pin = tx_inst.get_pin(pin_name)
             num_contacts = calculate_num_contacts(self, pin.height(),

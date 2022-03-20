@@ -42,6 +42,7 @@ class CaravelWrapper(PinAssignmentsMixin, RouterMixin, CaravelEsdMixin, design):
         design.__init__(self, wrapper_name)
         self.sram_to_wrapper_conns = {}
         self.wrapper_to_wrapper_conns = {}
+        self.separate_vdd_write = OPTS.separate_vdd_write
         self.analyze_sizes()
         self.create_layout()
 
@@ -55,15 +56,21 @@ class CaravelWrapper(PinAssignmentsMixin, RouterMixin, CaravelEsdMixin, design):
         PinAssignmentsMixin.word_size = min_word_size
         debug.info(1, "Min Word size = %d", min_word_size)
 
+    def create_reram_wrapper(self):
+        self.sram = ReRamWrapper()
+
+    def add_tech_layers(self):
+        tech.add_tech_layers(self)
+
     def create_layout(self):
         self.create_empty_wrapper()
-        self.sram = ReRamWrapper()
+        self.create_reram_wrapper()
         self.create_diode()
         self.assign_pins()
         self.add_modules()
         self.route_layout()
         self.create_netlist()
-        tech.add_tech_layers(self)
+        self.add_tech_layers()
         self.flatten_diodes()
         self.write_to_gds()
         self.write_to_spice()
@@ -111,9 +118,14 @@ class CaravelWrapper(PinAssignmentsMixin, RouterMixin, CaravelEsdMixin, design):
         self.gds_read()
         self.gds_write(self.lvs_gds_file)
 
+    @staticmethod
+    def get_lvs_spice_file():
+        lvs_spice_file = os.path.join(spice_dir, f"{wrapper_name}.lvs.spice")
+        return lvs_spice_file
+
     def write_to_spice(self):
-        self.lvs_spice_file = os.path.join(spice_dir, f"{wrapper_name}.lvs.spice")
-        with open(self.lvs_spice_file, "w") as f:
+        lvs_spice_file = self.get_lvs_spice_file()
+        with open(lvs_spice_file, "w") as f:
             f.write(self.lvs_spice_content)
 
         spice_file = os.path.join(spice_dir, f"{wrapper_name}.spice")

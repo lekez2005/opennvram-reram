@@ -1,15 +1,11 @@
-from abc import ABC
-
 import tech
 from base import utils, well_active_contacts
 from base.analog_cell_mixin import AnalogMixin
-from base.contact import well as well_contact, poly as poly_contact, cross_poly, m1m2, m2m3, cross_m1m2, cross_m2m3
-from base.design import design, ACTIVE, METAL1, POLY, METAL3, METAL2, PWELL, NWELL
-from base.layout_clearances import find_clearances, HORIZONTAL
+from base.contact import well as well_contact, poly as poly_contact, cross_poly, m1m2, m2m3
+from base.design import design, ACTIVE, METAL1, POLY
 from base.unique_meta import Unique
-from base.utils import round_to_grid as round_
+from base.utils import round_to_grid as round_g
 from base.vector import vector
-from base.well_active_contacts import calculate_num_contacts
 from globals import OPTS
 from pgates.ptx import ptx
 from pgates.ptx_spice import ptx_spice
@@ -117,7 +113,7 @@ class BitcellAlignedPgate(design, metaclass=Unique):
             pmos_poly = all_pmos_poly[pmos_index]
             bottom_poly, top_poly = sorted([nmos_poly, pmos_poly], key=lambda x: x.by())
             width = nmos_poly.width()
-            if round_(bottom_poly.lx()) == round_(top_poly.lx()):
+            if round_g(bottom_poly.lx()) == round_g(top_poly.lx()):
                 self.add_rect(POLY, bottom_poly.ul(), width=width,
                               height=top_poly.by() - bottom_poly.uy())
             else:
@@ -154,13 +150,19 @@ class BitcellAlignedPgate(design, metaclass=Unique):
         self.add_rect(METAL1, vector(pin.lx(), pin.cy()), width=pin.width(),
                       height=power_pin.cy() - pin.cy())
 
-    def route_tx_to_power(self, tx_inst, tx_pin_name="D"):
+    def route_tx_to_power(self, tx_inst, tx_pin_name="D", pin_indices=None):
         pin_name = "vdd" if tx_inst.mod.tx_type.startswith("p") else "gnd"
         power_pins = self.get_pins(pin_name)
         power_pin = min(power_pins, key=lambda x: abs(x.cy() - tx_inst.cy()))
-        for tx_pin in tx_inst.get_pins(tx_pin_name):
+
+        if pin_indices:
+            all_pins = self.get_sorted_pins(tx_inst, tx_pin_name)
+            all_pins = [all_pins[i] for i in pin_indices]
+        else:
+            all_pins = tx_inst.get_pins(tx_pin_name)
+        for tx_pin in all_pins:
             # todo make configurable
-            width = round_(1.5 * self.m1_width)
+            width = round_g(1.5 * self.m1_width)
             if tx_pin.cy() >= power_pin.cy():
                 y_offset = tx_pin.uy()
             else:

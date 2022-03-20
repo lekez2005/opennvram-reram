@@ -1,3 +1,4 @@
+import itertools
 import math
 from io import StringIO
 from typing import TYPE_CHECKING
@@ -5,6 +6,7 @@ from typing import TYPE_CHECKING
 import debug
 from base.design import design
 from base.hierarchy_spice import INOUT, OUTPUT
+from globals import OPTS
 
 if TYPE_CHECKING:
     from .caravel_wrapper import ReRamWrapper as Wrapper
@@ -22,6 +24,8 @@ VCC_D1 = VDD = "vccd1"  # 1.8 V
 VCC_D2 = "vccd2"  # 1.8 V
 
 VDD_WRITE = "io_analog[2]"
+VDD_WRITE_BL = "io_analog[2]"
+VDD_WRITE_BR = "io_analog[3]"
 VDD_WORDLINE = "io_analog[1]"
 
 VSS_A1 = "vssa1"
@@ -163,16 +167,15 @@ class PinAssignmentsMixin(Wrapper):
         # assign minimum viable sram pins to analog pins
         self.assign(CLK, analog(9))
         self.assign(SENSE_TRIG, analog(10))
-        self.assign(WEB, analog(0))
 
         self.assign(VREF, analog(6))
         self.assign(VCLAMP, analog(7))
         self.assign(VCLAMPP, analog(8))
 
         # other analog pins
-        self.assign(data_in_pin(0), analog(3))
+        self.assign(data_in_pin(0), analog(5))
         self.assign(data_out_pin(0), analog(4))
-        self.assign(mask_in_pin(0), analog(5))
+        self.assign(mask_in_pin(0), analog(0))
 
         for i in range(3):
             self.assign_wrapper_power(f"io_clamp_low[{i}]", GND)
@@ -186,14 +189,15 @@ class PinAssignmentsMixin(Wrapper):
         #  assignment_func("data_out_others", gpio(1))
         assignment_func("data_others", analog_gpio(0))
         assignment_func("mask_others", analog_gpio(1))
+        assignment_func(WEB, analog_gpio(2))
 
         available_gpio = num_digital_gpio
         # bank sels
         for i in range(4):
-            assignment_func(f"bank_sel[{i}]", analog_gpio(2 + i))
+            assignment_func(f"bank_sel_b[{i}]", analog_gpio(3 + i))
 
-        available_analog_gpio = num_analog_gpio - 6
-        analog_gpio_index = 2 + 4
+        available_analog_gpio = num_analog_gpio - 7
+        analog_gpio_index = 3 + 4
 
         gpio_index = 0
 
@@ -237,11 +241,26 @@ class PinAssignmentsMixin(Wrapper):
         self.assign("gnd", GND)
         self.assign("vdd", VDD)
 
-        self.edge_grid_names = [GND, VDD_ESD, GND, VDD, GND, VDD_WORDLINE, GND, VDD_WRITE]
+        if OPTS.separate_vdd_write:
+            self.vdd_write_pins = [VDD_WRITE_BL, VDD_WRITE_BR]
+            self.vdd_write_sram_pins = ["vdd_write_bl", "vdd_write_br"]
+            self.alternated_vdd_write_pins = [GND, VDD_WRITE_BL, GND, VDD_WRITE_BR]
+        else:
+            self.vdd_write_pins = [VDD_WRITE]
+            self.vdd_write_sram_pins = ["vdd_write"]
+            self.alternated_vdd_write_pins = [GND, VDD_WRITE]
+
+        self.edge_grid_names = ([GND, VDD_ESD, GND, VDD, GND, VDD_WORDLINE] +
+                                self.alternated_vdd_write_pins)
+        self.grid_names_set = set(self.edge_grid_names)
 
         # assign analog pins to power
         self.assign("vdd_wordline", VDD_WORDLINE)
-        self.assign("vdd_write", VDD_WRITE)
+        if self.separate_vdd_write:
+            self.assign("vdd_write_bl", VDD_WRITE_BL)
+            self.assign("vdd_write_br", VDD_WRITE_BR)
+        else:
+            self.assign("vdd_write", VDD_WRITE)
 
         self.assign_analog_pins()
 

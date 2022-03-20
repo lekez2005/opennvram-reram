@@ -6,6 +6,7 @@ from base.layout_clearances import find_clearances, VERTICAL
 from base.vector import vector
 from base.well_active_contacts import calculate_num_contacts
 from base.well_implant_fills import evaluate_vertical_metal_spacing
+from globals import OPTS
 from modules.bank_mixins import WordlineVoltageMixin
 from modules.baseline_bank import BaselineBank, EXACT, LEFT_FILL, RIGHT_FILL
 
@@ -17,13 +18,30 @@ class ReRamBank(WordlineVoltageMixin, BaselineBank):
         self.add_pin_list(["vref", "vclamp", "vclampp"])
         for i in range(self.word_size):
             self.add_pin("DATA_OUT[{0}]".format(i))
-        self.add_pin_list(["vdd_write", "vdd_wordline"])
+
+        if OPTS.separate_vdd_write:
+            self.vdd_write_pins = ["vdd_write_bl", "vdd_write_br"]
+        else:
+            self.vdd_write_pins = ["vdd_write"]
+        self.add_pin_list(self.vdd_write_pins + ["vdd_wordline"])
 
     def route_all_instance_power(self, inst, via_rotate=90):
         if inst == self.write_driver_array_inst:
             self.route_write_driver_power()
-            return
+            if not OPTS.separate_vdd_write:
+                return
         super().route_all_instance_power(inst, via_rotate)
+
+    def calculate_control_buffers_y(self, num_top_rails, num_bottom_rails, module_space):
+        control_top = super().calculate_control_buffers_y(num_top_rails,
+                                                          num_bottom_rails, module_space)
+        # to add room for data out
+        self.data_out_y = self.trigate_y + 0.5 * max(m2m3.h_2, m3m4.h_1, m3m4.h_2)
+
+        space = self.m4_space + m3m4.h_2
+
+        self.trigate_y = self.data_out_y + space
+        return control_top
 
     def get_bitcell_array_y_offset(self):
         # add space for bl_reset
@@ -106,27 +124,43 @@ class ReRamBank(WordlineVoltageMixin, BaselineBank):
                           width=self.right_gnd.rx() - x_offset)
             self.add_power_via(pin, self.right_gnd)
 
+    def get_data_in_m2m3_x_offset(self, data_in, word):
+        mask_out = self.get_mask_flop_out(word)
+        if mask_out.lx() > data_in.lx():
+            return min(data_in.lx(), mask_out.lx() - self.m2_space - m2m3.w_1)
+        return data_in.lx()
+
     def get_write_driver_array_connection_replacements(self):
         replacements = super().get_write_driver_array_connection_replacements()
-        replacements.append(("vdd", "vdd_write"))
+        if not OPTS.separate_vdd_write:
+            replacements.append(("vdd", "vdd_write"))
         return replacements
 
     def route_write_driver_power(self):
         for pin in self.write_driver_array_inst.get_pins("gnd"):
             self.route_gnd_pin(pin)
 
-        # TODO: sky_tapeout: handle separate vdd
-        for pin in self.write_driver_array_inst.get_pins("vdd"):
-            if pin.layer == METAL3:
-                self.add_layout_pin("vdd_write", pin.layer, pin.ll(),
-                                    height=pin.height(),
-                                    width=self.right_edge - pin.lx())
+        if OPTS.separate_vdd_write:
+            vdd_write_pins = self.vdd_write_pins, self.vdd_write_pins
+        else:
+            vdd_write_pins = ["vdd"], self.vdd_write_pins
+
+        for driver_pin_name, bank_pin_name in zip(vdd_write_pins[0], vdd_write_pins[1]):
+            for driver_pin in self.write_driver_array_inst.get_pins(driver_pin_name):
+                if driver_pin.layer == METAL3:
+                    self.add_layout_pin(bank_pin_name, driver_pin.layer, driver_pin.ll(),
+                                        height=driver_pin.height(),
+                                        width=self.right_edge - driver_pin.lx())
 
     def connect_tri_output_to_data(self, word, fill_width, fill_height):
         tri_out_pin = self.tri_gate_array_inst.get_pin("out[{}]".format(word))
+        y_offset = self.data_out_y
+
+        self.add_rect(METAL2, vector(tri_out_pin.lx(), y_offset), width=tri_out_pin.width(),
+                      height=tri_out_pin.by() - y_offset)
+
         x_offset = tri_out_pin.cx() - 0.5 * self.m4_width
 
-        y_offset = tri_out_pin.uy() - 0.5 * m1m2.h_2
         self.add_layout_pin(f"DATA_OUT[{word}]", METAL4, vector(x_offset, self.min_point),
                             height=y_offset - self.min_point)
         via_offset = vector(tri_out_pin.cx(), y_offset)
@@ -199,9 +233,8 @@ class ReRamBank(WordlineVoltageMixin, BaselineBank):
                 super().connect_m4_grid_instance_power(instance_pin, rail)
 
     def get_intra_array_grid_y(self):
-        # TODO: sky_tapeout: move data out down so gnd pin can be connected
         top_gnd = max(self.write_driver_array_inst.get_pins("gnd"), key=lambda x: x.uy())
-        return top_gnd.by() - self.m4_width
+        return top_gnd.by() + self.m4_width
 
     def get_intra_array_grid_top(self):
         return self.bitcell_array_inst.uy()
@@ -213,11 +246,17 @@ class ReRamBank(WordlineVoltageMixin, BaselineBank):
     def add_related_m4_grid_pin(self, original_pin):
         if not hasattr(self, "m4_pin_map"):
             self.m4_pin_map = {}
-        pin_bottom = self.tri_gate_array_inst.get_pins("vdd")[0].by() - self.m4_width
+        pin_bottom = self.tri_gate_array_inst.get_pins("gnd")[0].cy() - 0.5 * m3m4.h_2
 
-        bot_gnd = min(self.write_driver_array_inst.get_pins("gnd"), key=lambda x: x.uy())
-
-        pin_top = bot_gnd.uy() + self.m4_width
+        if original_pin.name == "gnd":
+            pin_top = max(self.write_driver_array_inst.get_pins("gnd"), key=lambda x: x.uy()).uy()
+        elif OPTS.separate_vdd_write:
+            # TODO potential clash with write vdd
+            top_vdd = max(self.write_driver_array_inst.get_pins("vdd"), key=lambda x: x.uy())
+            pin_top = top_vdd.cy() + 0.5 * m3m4.h_2
+        else:
+            bot_gnd = min(self.write_driver_array_inst.get_pins("gnd"), key=lambda x: x.uy())
+            pin_top = bot_gnd.uy() + self.m4_width
         pin = self.add_layout_pin(original_pin.name, original_pin.layer,
                                   vector(original_pin.lx(), pin_bottom),
                                   width=original_pin.width(),

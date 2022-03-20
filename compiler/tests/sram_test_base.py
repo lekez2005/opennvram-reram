@@ -45,18 +45,18 @@ class SramTestBase(OpenRamTest):
 
         self.local_check(a)
 
-    def test_sweep_all(self):
-        self.sweep_all(cols=[], rows=[16], words_per_row=1, default_col=16, num_banks=1)
-        # self.sweep_all(cols=[], rows=[32], words_per_row=1, default_col=32, num_banks=1)
-        # self.sweep_all(cols=[], rows=[64], words_per_row=1, default_col=64, num_banks=1)
-        # self.sweep_all(cols=[], rows=[64], words_per_row=2, default_col=64, num_banks=1)
-        # self.sweep_all()
+    # def test_sweep_all(self):
+    #     self.sweep_all(cols=[], rows=[16], words_per_row=1, default_col=16, num_banks=1)
+    #     # self.sweep_all(cols=[], rows=[32], words_per_row=1, default_col=32, num_banks=1)
+    #     # self.sweep_all(cols=[], rows=[64], words_per_row=1, default_col=64, num_banks=1)
+    #     # self.sweep_all(cols=[], rows=[64], words_per_row=2, default_col=64, num_banks=1)
+    #     # self.sweep_all()
 
-    # def test_one_bank(self):
-    #     sram_class = self.get_sram_class()
-    #     from globals import OPTS
-    #     OPTS.run_optimizations = False
-    #     self.create_and_test_sram(sram_class, 32, 16, words_per_row=2, num_banks=1)
+    def test_one_bank(self):
+        sram_class = self.get_sram_class()
+        from globals import OPTS
+        OPTS.run_optimizations = False
+        self.create_and_test_sram(sram_class, 32, 16, words_per_row=2, num_banks=1)
 
     # def test_two_dependent_banks(self):
     #     from globals import OPTS

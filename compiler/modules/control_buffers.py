@@ -898,7 +898,7 @@ class ControlBuffers(design, ABC):
                 rail_y = max_rail.by()
 
         self.indirect_m3_connections.append((m3_x_offset, m3_end_x, rail_y))
-        if rail_y < self.bottom_gnd_y:
+        if rail_y < self.bottom_gnd_y + self.rail_height + self.get_space(METAL3):
             self.increase_additional_rails()
             return False
 
@@ -917,7 +917,11 @@ class ControlBuffers(design, ABC):
             self.add_cross_contact_center(cross_m2m3, offset=vector(via_x, original_rail.cy()),
                                           rotate=False)
 
-        if via_x + 0.5 * m2m3.contact_width + self.get_via_space(m2m3) > original_x_offset:
+        min_adjacent_m2_x = (via_x + 0.5 * m2m3.w_1 + self.get_parallel_space(METAL2)
+                             + 0.5 * m2m3.w_1 - 0.5 * self.m2_width)
+
+        if (via_x + 0.5 * m2m3.contact_width + self.get_via_space(m2m3) > original_x_offset or
+                min_adjacent_m2_x > original_x_offset):
             # use a direct M2 connection (no vias)
             new_rail = self.add_rect(METAL2, offset=vector(via_x, rail_y),
                                      width=original_x_offset + self.m2_width - via_x)

@@ -13,10 +13,10 @@ class BitlineAlignedArrayTest(ReRamTestBase):
     #     a = self.create_class_from_opts("sense_amp_array", columns=32, word_size=32)
     #     self.local_check(a)
     #
-    # def test_write_driver_array(self):
-    #     self.debug.info(1, "Testing 2 words per row write driver")
-    #     a = self.create_class_from_opts("write_driver_array", columns=32, word_size=32)
-    #     self.local_check(a)
+    def test_write_driver_array(self):
+        self.debug.info(1, "Testing 2 words per row write driver")
+        a = self.create_class_from_opts("write_driver_array", columns=32, word_size=16)
+        self.local_check(a)
     #
     # def test_flop_array(self):
     #     self.debug.info(1, "Testing 2 words per row flop array")
@@ -49,13 +49,13 @@ class BitlineAlignedArrayTest(ReRamTestBase):
     #     a = FlopBuffer(OPTS.control_flop, OPTS.control_flop_buffers)
     #     self.local_check(a)
     #
-    def test_bitcell_array(self):
-        self.debug.info(1, "Testing bitcell array")
-        from modules.logic_buffer import LogicBuffer
-        a = LogicBuffer(buffer_stages=[4.71, 14.6, 20], logic="pnand2", height=5,
-                        align_bitcell=True, route_inputs=False)
-        # a = self.create_class_from_opts("bitcell_array", cols=32, rows=32)
-        self.local_check(a)
+    # def test_bitcell_array(self):
+    #     self.debug.info(1, "Testing bitcell array")
+    #     from modules.logic_buffer import LogicBuffer
+    #     a = LogicBuffer(buffer_stages=[4.71, 14.6, 20], logic="pnand2", height=5,
+    #                     align_bitcell=True, route_inputs=False)
+    #     # a = self.create_class_from_opts("bitcell_array", cols=32, rows=32)
+    #     self.local_check(a)
 
 
 BitlineAlignedArrayTest.run_tests(__name__)

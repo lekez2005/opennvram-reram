@@ -22,13 +22,13 @@ skip_ram_lvs = False
 class ReRamTest(ReRamTestBase):
 
     @skipIf(True, "Skipping reram_wrapper")
-    def test_reram_wrapper(self):
+    def test_1_reram_wrapper(self):
         from reram_wrapper import ReRamWrapper
         a = ReRamWrapper()
         self.local_check(a)
 
     @skipIf(False, "Skipping Caravel Wrapper generation")
-    def test_wrap_reram(self):
+    def test_2_caravel_caravel(self):
         from globals import OPTS
         OPTS.add_internal_grid = add_internal_grid
         from caravel.caravel_wrapper import CaravelWrapper
@@ -36,14 +36,13 @@ class ReRamTest(ReRamTestBase):
 
         if not skip_ram_lvs:
             import verify
-            # self.local_drc_check(a)
-            self.assertTrue(verify.run_lvs(a.name, a.lvs_gds_file, a.lvs_spice_file) == 0)
+            self.local_drc_check(a)
+            self.assertTrue(verify.run_lvs(a.name, a.lvs_gds_file, a.get_lvs_spice_file()) == 0)
 
-    def test_generate_srams(self):
+    def test_0_generate_srams(self):
         from reram_wrapper import sram_configs
         from base.design import METAL4
         from base.utils import round_to_grid as round_
-        from globals import OPTS
         created_modules = []
         for config in sram_configs:
             self.setUp()
@@ -74,8 +73,8 @@ class ReRamTest(ReRamTestBase):
 
             created_modules.append(config.module_name)
 
-            # if not skip_ram_lvs:
-            #     self.local_check(a)
+            if not skip_ram_lvs:
+                self.local_check(a)
 
             a.sp_write(config.spice_file)
             a.gds_write(config.gds_file)

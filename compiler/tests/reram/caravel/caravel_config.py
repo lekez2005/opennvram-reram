@@ -49,6 +49,9 @@ class SramConfig:
     def gds_file(self):
         return os.path.join(gds_dir, f"{self.module_name}.gds")
 
+    def get_gds_file(self):
+        return self.gds_file
+
     @property
     def spice_file(self):
         return os.path.join(base_dir, "netgen", f"{self.module_name}.spice")
@@ -64,6 +67,12 @@ sram_configs = [
     SramConfig(word_size=64, num_rows=64, words_per_row=2),
     SramConfig(word_size=16, num_rows=16, words_per_row=1)
 ]
+
+# simulation config
+simulation_sel_index = 0
+simulation_other_mask = 1
+simulation_other_data = 0
+simulation_esd_voltage = 3.3
 
 # sram_configs = [
 #     SramConfig(word_size=8, num_rows=32, words_per_row=1),

@@ -5,6 +5,7 @@ from base.design import METAL1, METAL3, METAL4, METAL5
 from base.layout_clearances import find_clearances, VERTICAL
 from base.vector import vector
 from base.well_active_contacts import calculate_num_contacts
+from globals import OPTS
 from modules.baseline_sram import BaselineSram
 from modules.sram_mixins import StackedDecoderMixin, DecoderAddressPins
 from modules.sram_power_grid import WordlineVddMixin
@@ -29,7 +30,7 @@ class ReRam(WordlineVddMixin, DecoderAddressPins, StackedDecoderMixin, BaselineS
 
     def copy_layout_pins(self):
         self.add_address_pins()
-        exceptions = ["vdd", "gnd", "vdd_wordline", "vdd_write"]
+        exceptions = ["vdd", "gnd", "vdd_wordline"] + self.bank.vdd_write_pins
         for pin in self.pins:
             if pin.lower() in self.pin_map or pin in exceptions:
                 continue
@@ -46,11 +47,27 @@ class ReRam(WordlineVddMixin, DecoderAddressPins, StackedDecoderMixin, BaselineS
         tech.add_tech_layers(self)
 
     def route_write_driver_power(self):
-        pin = self.bank_inst.get_pin("vdd_write")
-        y_offset = pin.cy() - 0.5 * self.power_grid_width
-        self.add_layout_pin("vdd_write", METAL5, vector(pin.lx(), y_offset),
-                            width=pin.width(), height=self.power_grid_width)
-        self.power_grid_y_forbidden.append(pin.cy() - 0.5 * self.power_grid_width)
+
+        def get_top_pin(pin_name):
+            return max(self.bank_inst.get_pins(pin_name), key=lambda x: x.cy())
+
+        pins = sorted([get_top_pin(x) for x in self.bank.vdd_write_pins],
+                      key=lambda x: x.cy())
+
+        if OPTS.separate_vdd_write:
+            # TODO: sky_tapeout: remove duplicated logic
+            # add y shift to prevent clash with vdd
+            y_shift = 1
+            mid_y = 0.5 * (pins[0].cy() + pins[0].cy()) + y_shift
+            y_offsets = [mid_y - 0.5 * self.power_grid_y_space - self.power_grid_width,
+                         mid_y + 0.5 * self.power_grid_y_space]
+        else:
+            pin = pins[0]
+            y_offsets = [pin.cy() - 0.5 * self.power_grid_width]
+        for i, pin in enumerate(pins):
+            self.add_layout_pin(pin.name, METAL5, vector(pin.lx(), y_offsets[i]),
+                                width=pin.width(), height=self.power_grid_width)
+            self.power_grid_y_forbidden.append(y_offsets[i])
 
     def add_m2_m4_power(self):
         self.m4_gnd_rects = []
@@ -85,8 +102,6 @@ class ReRam(WordlineVddMixin, DecoderAddressPins, StackedDecoderMixin, BaselineS
     def route_power_grid(self):
         super().route_power_grid()
 
-        write_pin = self.get_pin("vdd_write")
-
         m4m5 = ("metal4", "via4", "metal5")
         m5m6 = ("metal5", "via5", "metal6")
 
@@ -96,14 +111,30 @@ class ReRam(WordlineVddMixin, DecoderAddressPins, StackedDecoderMixin, BaselineS
         right_vdd = max(self.bank_inst.get_pins("vdd"), key=lambda x: x.rx())
 
         vdd_rects = self.m4_vdd_rects
-        for rect in vdd_rects:
-            if (write_pin.lx() <= rect.cx() <= write_pin.rx() and
-                    rect.cx() <= right_vdd.lx()):
-                offset = vector(rect.cx(), write_pin.cy())
-                self.add_cross_contact_center(cross_m3m4, offset, fill=False,
-                                              rotate=True)
-                self.add_contact_center(m4m5, offset)
-                self.add_rect_center(METAL4, offset, width=fill_width, height=fill_height)
+
+        for write_pin_name in self.bank.vdd_write_pins:
+            sram_pin = self.get_pin(write_pin_name)
+            bank_pins = self.bank.get_pins(write_pin_name)
+            for rect in vdd_rects:
+                if (sram_pin.lx() <= rect.cx() <= sram_pin.rx() and
+                        rect.cx() <= right_vdd.lx()):
+
+                    offset = vector(rect.cx(), sram_pin.cy())
+                    self.add_contact_center(m4m5, offset)
+
+                    for bank_pin in bank_pins:
+
+                        offset = vector(rect.cx(), bank_pin.cy())
+                        self.add_cross_contact_center(cross_m3m4, offset, fill=False,
+                                                      rotate=True)
+
+                        if offset.y < sram_pin.cy():
+                            m4_end = max(sram_pin.cy(), offset.y + fill_height)
+                        else:
+                            m4_end = min(sram_pin.cy(), offset.y - fill_height)
+                        height = m4_end - offset.y
+                        offset.y = 0.5 * (offset.y + m4_end)
+                        self.add_rect_center(METAL4, offset, width=fill_width, height=height)
 
         wordline_pin = self.get_pin("vdd_wordline")
 

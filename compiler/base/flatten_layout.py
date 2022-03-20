@@ -4,6 +4,7 @@ from typing import List
 from base.design import design
 from base.geometry import geometry, rectangle
 from base.pin_layout import pin_layout
+from tech import layer as tech_layers
 
 InstList = List[geometry]
 IntList = List[int]
@@ -64,3 +65,16 @@ def flatten_subckts(self: design, insts: InstList = None,
     insts, inst_indices = set_default_insts(self, insts, inst_indices)
     for inst in insts:
         flatten_rects(inst.mod)
+
+
+def remove_layer_shapes(self: design, layers=None):
+    """Removes shapes of the specified layers"""
+    layers = layers or []
+    objs = [x for x in self.objs]
+
+    for layer in layers:
+        layer_num = tech_layers[layer]
+        for i, obj in enumerate(objs):
+            if isinstance(obj, rectangle) and obj.layerNumber == layer_num:
+                self.objs[i] = None
+    self.objs = [x for x in self.objs if x]

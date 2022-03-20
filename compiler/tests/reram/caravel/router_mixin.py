@@ -10,7 +10,7 @@ from base.geometry import instance, rectangle
 from base.pin_layout import pin_layout
 from base.vector import vector
 from globals import OPTS
-from pin_assignments_mixin import VDD_WORDLINE, VDD_WRITE, VDD, GND, VSS_D2, VSS_A2, VSS_A1, VCC_D2, VDD_ESD, VDD_A2
+from pin_assignments_mixin import VDD_WORDLINE, VDD, GND, VSS_D2, VSS_A2, VSS_A1, VCC_D2, VDD_ESD, VDD_A2
 from tech import spice as tech_spice
 
 if TYPE_CHECKING:
@@ -48,8 +48,6 @@ m4_width = 0.56
 via_space_threshold = 2
 
 sense_pins = ["vclamp", "vclampp", "vref"]
-
-grid_names = [VDD_WRITE, VDD_WORDLINE, VDD_ESD, VDD, GND]
 
 
 class GridNode:
@@ -434,8 +432,8 @@ class RouterMixin(CaravelWrapper):
                 self.route_sram_to_caravel(pin, caravel_pin_)
 
     def add_power_grid(self):
-        self.vert_power_grid = {key: [] for key in grid_names}
-        self.horz_power_grid = {key: [] for key in grid_names}
+        self.vert_power_grid = {key: [] for key in self.grid_names_set}
+        self.horz_power_grid = {key: [] for key in self.grid_names_set}
 
         self.add_edge_power_grid()
         self.connect_sram_power()
@@ -544,12 +542,13 @@ class RouterMixin(CaravelWrapper):
                 else:
                     self.connect_to_bottom(pin, VDD_WORDLINE)
         # vdd write
-        for pin_name in ["vdd_write"]:
-            for pin in self.sram_inst.get_pins(pin_name):
+        for i, sram_name in enumerate(self.vdd_write_sram_pins):
+            caravel_name = self.vdd_write_pins[i]
+            for pin in self.sram_inst.get_pins(sram_name):
                 if pin.cx() > self.mid_x:
-                    self.connect_to_right(pin, VDD_WRITE)
+                    self.connect_to_right(pin, caravel_name)
                 else:
-                    self.connect_to_left(pin, VDD_WRITE)
+                    self.connect_to_left(pin, caravel_name)
 
         for pin_name in ["vdd", "gnd"]:
             grid_name = VDD if pin_name == "vdd" else GND
@@ -643,7 +642,7 @@ class RouterMixin(CaravelWrapper):
     def add_internal_power_grid(self):
         if not OPTS.add_internal_grid:
             return
-        pin_order = [VDD_ESD, GND, VDD, GND, VDD_WORDLINE, GND, VDD, GND, VDD_WRITE]
+        pin_order = [VDD_ESD, GND, VDD, GND, VDD_WORDLINE, GND, VDD, GND] + self.alternated_vdd_write_pins
         num_grid = len(pin_order)
 
         def assign_grid(span, lower_obstruction, higher_obstruction):
@@ -682,7 +681,7 @@ class RouterMixin(CaravelWrapper):
 
         self.power_pin_map = pin_map
 
-        power_pins = list(pin_map.keys()) + [GND, VDD, VDD_WORDLINE, VDD_WRITE, VDD_ESD]
+        power_pins = list(pin_map.keys()) + [GND, VDD, VDD_WORDLINE, VDD_ESD] + self.vdd_write_pins
         for pin_name in power_pins:
             dest_name = pin_map.get(pin_name, pin_name)
             for source_pin in self.wrapper_inst.get_pins(pin_name):

@@ -29,6 +29,19 @@ control_flop = "ms_flop_horz_pitch.MsFlopHorzPitch"
 sense_amp_array = "sense_amp_array"
 sense_amp = "reram_sense_amp.ReRamSenseAmp"
 
+separate_vdd_write = True
+if separate_vdd_write:
+    write_driver_logic_mod = "write_driver_mux_logic"
+    write_driver = "write_driver_mux_separate_vdd.WriteDriverMuxSeparateVdd"
+    write_driver_array = "write_driver_mask_array"
+else:
+    write_driver_mod = "write_driver_pgate.WriteDriverPgate"
+    write_driver_array = "write_driver_pgate_array.WriteDriverPgateArray"
+    write_driver_logic_size = 2.5
+
+write_vdd_rail_height = 0.5
+write_driver_buffer_size = 10
+
 column_mux_array = "single_level_column_mux_array"
 column_mux = "tgate_column_mux_pgate"
 
@@ -51,7 +64,7 @@ filament_scale_factor = 1e7
 min_filament_thickness = 3.3e-9 * filament_scale_factor
 max_filament_thickness = 4.9e-9 * filament_scale_factor
 vdd_wordline = 2.5
-vdd_write = 2.4
+vdd_write = vdd_write_bl = vdd_write_br = 2.4
 sense_amp_vclamp = 0.9
 sense_amp_vclampp = 0.9
 sense_amp_vref = 1
@@ -76,7 +89,3 @@ def configure_timing(sram, OPTS):
     OPTS.sense_trigger_delay = trigger_delay
 
     return first_read, first_write, second_read, second_write
-
-# TODO:
-# stacked wordline driver
-# wordline vdd power

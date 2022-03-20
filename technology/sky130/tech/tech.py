@@ -18,7 +18,7 @@ info["name"] = "sky130"
 info["has_pwell"] = False
 info["has_nwell"] = True
 
-drc_name = "klayout"
+drc_name = "magic"
 lvs_name = "netgen"
 pex_name = "magic"
 

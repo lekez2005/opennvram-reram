@@ -73,6 +73,11 @@ def seal_poly_vias(obj: design):
             height = obj.height - bot_  # no space between adjacent bitcells
         else:
             height = top_ - bot_
+        # prevent minimum space between adjacent cells
+        if left_ < 0.5 * npc_space:
+            left_ = 0
+        if right_ > obj.width - 0.5 * npc_space:
+            right_ = obj.width
         obj.add_rect("npc", vector(left_, bot_), width=right_ - left_, height=height)
 
 

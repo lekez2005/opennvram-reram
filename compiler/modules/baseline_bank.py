@@ -707,7 +707,7 @@ class BaselineBank(design, ControlBuffersRepeatersMixin, ControlSignalsMixin, AB
                         ("en_bar", "write_en_bar", EXACT), ("en", "write_en", EXACT)]
 
         if self.words_per_row > 1:
-            replacements.extend([("bl", "bl_out"), ("br", "br_out")])
+            replacements.extend([("bl[", "bl_out["), ("br[", "br_out[")])
         return replacements
 
     def add_write_driver_array(self):
@@ -1232,7 +1232,14 @@ class BaselineBank(design, ControlBuffersRepeatersMixin, ControlSignalsMixin, AB
         driver_pin = self.get_write_driver_mask_in(word)
         self.add_rect(METAL2, offset=flop_pin.ul(), width=flop_pin.width(),
                       height=mask_flop_out_via_y + self.m2_width - flop_pin.uy())
-        self.add_contact(m2m3.layer_stack, offset=vector(flop_pin.lx(), mask_flop_out_via_y))
+
+        bl_pin = br_inst.get_pin("bl[{}]".format(word))
+        mid_x = 0.5 * (br_pin.cx() + bl_pin.cx())
+        if flop_pin.cx() > mid_x:
+            via_x = flop_pin.rx() - m2m3.w_2
+        else:
+            via_x = flop_pin.lx()
+        self.add_contact(m2m3.layer_stack, offset=vector(via_x, mask_flop_out_via_y))
 
         # add via to m4
         via_offset = vector(br_x_offset, mask_flop_out_via_y + 0.5 * m2m3.second_layer_height
@@ -1349,6 +1356,9 @@ class BaselineBank(design, ControlBuffersRepeatersMixin, ControlSignalsMixin, AB
             if abs(bl_pin.cx() - br_pin.cx()) <= (2 * power_rail_width + self.m4_space):
                 self.occupied_m4_bitcell_indices.append(column_index)
 
+    def get_data_in_m2m3_x_offset(self, data_in, word):
+        return data_in.lx()
+
     def route_data_flop_in(self, bitline_pins, word, data_via_y, fill_width, fill_height):
         br_pin = next(filter(lambda x: "br" in x.name, bitline_pins))
         # align data flop in with br
@@ -1357,7 +1367,8 @@ class BaselineBank(design, ControlBuffersRepeatersMixin, ControlSignalsMixin, AB
         x_offset = data_in.lx()
         offset = vector(x_offset, y_offset)
         self.add_rect(METAL2, offset=offset, height=data_in.by() - y_offset)
-        cont = self.add_contact(m2m3.layer_stack, offset=offset)
+        x_offset = self.get_data_in_m2m3_x_offset(data_in, word)
+        cont = self.add_contact(m2m3.layer_stack, offset=vector(x_offset, offset.y))
 
         x_offset = br_pin.lx()
         self.join_pins_with_m3(cont, br_pin, cont.cy(), fill_width, fill_height)

@@ -21,11 +21,12 @@ skip_ram_lvs = False
 
 class ReRamTest(ReRamTestBase):
 
-    @skipIf(True, "Skipping reram_wrapper")
+    @skipIf(False, "Skipping reram_wrapper")
     def test_1_reram_wrapper(self):
         from reram_wrapper import ReRamWrapper
         a = ReRamWrapper()
-        self.local_check(a)
+        if not skip_ram_lvs:
+            self.local_check(a)
 
     @skipIf(False, "Skipping Caravel Wrapper generation")
     def test_2_caravel_caravel(self):

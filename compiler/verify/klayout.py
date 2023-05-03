@@ -13,7 +13,7 @@ def run_klayout(command_name, cell_name, rule_file, options):
     out_file = os.path.join(OPTS.openram_temp, f"{cell_name}.{command_name}.out")
 
     return_code = utils.run_command(command, stdout_file=out_file, stderror_file=err_file,
-                                    verbose_level=3, cwd=OPTS.openram_temp)
+                                    verbose_level=2, cwd=OPTS.openram_temp)
     return return_code, out_file, err_file
 
 
@@ -45,9 +45,15 @@ class DrcError:
             yield rule.find("name").text, rule.find("description").text
 
     @staticmethod
-    def parse_errors(report_file, exception_group):
+    def get_drc_exceptions(exception_group):
         from tech import drc_exceptions
         ignored = drc_exceptions.get(exception_group, [])
+        ignored += drc_exceptions.get("all", [])
+        return ignored
+
+    @staticmethod
+    def parse_errors(report_file, exception_group):
+        ignored = DrcError.get_drc_exceptions(exception_group)
 
         tree = ElementTree.parse(report_file)
         rules = {key: value for key, value in DrcError.parse_rules(tree)}
@@ -74,10 +80,12 @@ def run_drc(cell_name, gds_name, exception_group="", flatten=None):
     command_name = "drc"
     options, report_file = create_options_str(cell_name, gds_name, command_name)
     rule_file = os.environ.get("KLAYOUT_DRC_DECK")
+    assert os.path.exists(rule_file), f"DRC rules file {rule_file} does not exist"
     return_code, out_file, err_file = run_klayout(command_name, cell_name, rule_file, options)
     from .magic import check_process_errors
     debug.error(f"{command_name} return code is non-zero", return_code)
-    check_process_errors(err_file, command_name)
+    benign_errors = DrcError.get_drc_exceptions(exception_group)
+    check_process_errors(err_file, command_name, benign_errors=benign_errors)
 
     num_errors = DrcError.parse_errors(report_file, exception_group)
     if num_errors > 0:

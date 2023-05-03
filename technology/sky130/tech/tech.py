@@ -19,6 +19,7 @@ info["has_pwell"] = False
 info["has_nwell"] = True
 
 drc_name = "klayout"
+# drc_name = "magic"
 lvs_name = "netgen"
 pex_name = "magic"
 
@@ -63,6 +64,8 @@ layer = {
     "res_metal3": 69,
     "res_metal4": 70,
     "cap2m": 97,
+    "hvi": 75,
+    "hvntm": 125
 }
 
 purpose = {
@@ -226,6 +229,14 @@ drc["metal6_extend_via5"] = 0.31
 drc["metal6_enclosure_via5"] = 0.31
 drc["minarea_metal6"] = 4
 
+# high voltage
+drc["hvi_enclose_active"] = 0
+drc["hvntm_enclose_active"] = 0
+drc["hvi_to_hvi"] = 0.7
+drc["minwidth_hvi"] = 0.6
+drc["minwidth_hvntm"] = 0.7
+drc["high_voltage_well_space"] = 2
+
 #########################
 # DRC Rules Exceptions
 drc_exceptions = {}
@@ -235,6 +246,8 @@ if drc_name == "magic":
                                  "All nwells must contain metal-connected N+ taps (nwell.4)"]
 else:
     drc_exceptions["latchup"] = []
+    drc_exceptions["all"] = ["warning: previous definition of",
+                             "warning: already initialized constant"]
 
 drc_exceptions["ptx"] = drc_exceptions["latchup"]
 drc_exceptions["reram_bitcell"] = drc_exceptions["latchup"]
@@ -250,6 +263,10 @@ spice["tx_instance_prefix"] = "X"
 spice["scale_tx_parameters"] = False
 spice["nmos"] = "sky130_fd_pr__nfet_01v8"
 spice["pmos"] = "sky130_fd_pr__pfet_01v8"
+spice["tx_names"] = {"sky130_fd_pr__nfet_01v8": "n",
+                     "sky130_fd_pr__pfet_01v8": "p",
+                     "sky130_fd_pr__nfet_g5v0d10v5": "n",
+                     "sky130_fd_pr__pfet_g5v0d10v5": "p"}
 spice["p_diode_name"] = "sky130_fd_pr__diode_pw2nd_05v5"
 spice["n_diode_name"] = "sky130_fd_pr__diode_pd2nw_05v5"
 spice["mim_cap_name"] = "sky130_fd_pr__cap_mim_m3_2"
